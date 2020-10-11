@@ -1,8 +1,15 @@
-main.bin: main.asm fx.asm
-	dasm main.asm -f3 -omain.bin -lmain.lst -smain.sym -d
+INCDIRS=inc zik src
+DFLAGS=$(patsubst %,-I%,$(INCDIRS)) -f3 -d
+
+# asm files
+SRC=$(wildcard src/*.asm)
+ZIK=$(wildcard zik/*.asm)
+
+main.bin: src/main.asm $(SRC) $(ZIK)
+	dasm $< -o$@ -lmain.lst -smain.sym $(DFLAGS)
 
 run: main.bin
-	stella main.bin
+	stella $<
 
 clean:
 	rm -f main.bin main.lst main.sym

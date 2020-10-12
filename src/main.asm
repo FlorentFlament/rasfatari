@@ -11,21 +11,17 @@
 
 	SEG.U   ram
 	ORG     $0080
-        
-        INCLUDE "JahBah_variables.asm"
-        
-framecnt	DS.B	1
-seed	        DS.B	1
-tmp	        DS.B	1
-buffer	        DS.B	5
 
+framecnt        DS.B	1
+        INCLUDE "JahBah_variables.asm"
+        INCLUDE "fx_vars.asm"
 
 ;;;-----------------------------------------------------------------------------
 ;;; Code segment
 
 	SEG code
 	ORG $F000
-       
+
 init:   CLEAN_START		; Initializes Registers & Memory
         INCLUDE "JahBah_init.asm"
 	jsr     fx_init

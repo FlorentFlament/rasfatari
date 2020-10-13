@@ -1,4 +1,7 @@
-    MAC GET_NOTE
+;;; Get current note being played
+;;; X reg value corresponds to channel to be tested (0 or 1)
+;;; Y and A are used
+    MAC GET_CURRENT_NOTE
         ldy tt_cur_pat_index_c0,x       ; get current pattern (index into tt_SequenceTable)
         lda tt_SequenceTable,y
         tay
@@ -10,33 +13,50 @@
         lda (tt_ptr),y
     ENDM
 
-fx_init:
+;;; Test if the instrument or percussion in `tmp` starts to play on any channel
+;;; Note that instruments in `tmp` must have the frequency set to 0
+;;; Z flag is set if `tmp` instrument/drum starts to play
+;;; regs A, X, Y are used
+test_instr_start:       SUBROUTINE
+        lda tt_timer
+        cmp #TT_SPEED-1
+        bne .end
+
+        ldx #1
+.channels_loop:
+        GET_CURRENT_NOTE
+        cmp #TT_FIRST_PERC      ; Percussions and instruments have values >= TT_FIRST_PERC
+        bcc .not_found
+
+        ;; TODO: Update if more than one drum is used
+        and #$e0                ; Cut frequency
+        cmp tmp
+        beq .end                ; Instr/Perc found
+.not_found:
+        dex
+        bpl .channels_loop      ; try other channel
+.end:
+        rts
+
+
+;;; Functions used in main
+fx_init:        SUBROUTINE
         lda #$ff
         sta COLUPF
 	rts
 
-fx_vblank:
-        lda tt_timer
-        cmp #TT_SPEED-1
-        bne .end_vblank
-
-        ;; Search rewind ball if starting a drum
-        ldx #1
-        GET_NOTE
-        cmp #$08                ; Silence
-        beq .end_vblank
-        and #$e0                ; Cut frequency
-        cmp #$0                 ; Percussion
-        bne .end_vblank
-.note_found:
-        lda #$ff
+fx_vblank:      SUBROUTINE
+        lda #$0                  ; Drum
+        sta tmp
+        jsr test_instr_start
+        bne .end
+        lda #0
         sta posy
-
-.end_vblank:
+.end:
         inc posy
 	rts
 
-fx_kernel:
+fx_kernel:      SUBROUTINE
         ldy #0
 .next_line:
         cpy posy
@@ -57,6 +77,6 @@ fx_kernel:
         sta ENABL
         rts
 
-fx_overscan:
+fx_overscan:    SUBROUTINE
 	inc framecnt
 	rts

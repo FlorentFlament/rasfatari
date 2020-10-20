@@ -17,7 +17,7 @@
 ;;; Note that instruments in `tmp` must have the frequency set to 0
 ;;; Z flag is set if `tmp` instrument/drum starts to play
 ;;; regs A, X, Y are used
-test_instr_start:       SUBROUTINE
+    MAC IS_NEW_NOTE
         lda tt_timer
         cmp #TT_SPEED-1
         bne .end
@@ -36,8 +36,7 @@ test_instr_start:       SUBROUTINE
         dex
         bpl .channels_loop      ; try other channel
 .end:
-        rts
-
+    ENDM
 
 ;;; Functions used in main
 fx_init:        SUBROUTINE
@@ -48,7 +47,7 @@ fx_init:        SUBROUTINE
 fx_vblank:      SUBROUTINE
         lda #$0                  ; Drum
         sta tmp
-        jsr test_instr_start
+        IS_NEW_NOTE
         bne .end
         lda #0
         sta posy

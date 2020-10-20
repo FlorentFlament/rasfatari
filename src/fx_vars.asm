@@ -1,4 +1,4 @@
-STACK_TOP = $f7
+STACK_TOP = $f8
 STACK_SIZE = 10
 NOTE_SIZE = 2
 

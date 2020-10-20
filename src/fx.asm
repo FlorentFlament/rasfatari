@@ -38,8 +38,42 @@
 .end:
     ENDM
 
+;;; Push a note into our circular notes stack
+    MAC PUSH_NOTE
+        lda #$00
+        sta stack_idx
+        lda #$ff
+        sta stack_idx+1
+
+        lda stack_idx
+        cmp #(STACK_TOP - STACK_SIZE)
+        bpl .no_wrap
+        lda #(STACK_TOP - NOTE_SIZE)
+        sta stack_idx
+.no_wrap:
+        sec
+        sbc #NOTE_SIZE
+        sta stack_idx
+    ENDM
+
+;;; TODO:
+    MAC DISPLAY_NOTES
+        lda stack_idx
+        sta tmp
+        ldx #(STACK_SIZE - 1)
+.loop:
+
+        dex
+        bpl .loop
+    ENDM
+
 ;;; Functions used in main
 fx_init:        SUBROUTINE
+        ;; Init stack
+        lda #(STACK_TOP - NOTE_SIZE)
+        sta stack_idx
+
+        ;; Init colors
         lda #$ff
         sta COLUPF
 	rts

@@ -39,72 +39,94 @@
     ENDM
 
 ;;; Push a note into our circular notes stack
+;;; Uses X and A registers
     MAC PUSH_NOTE
-        lda #$00
-        sta stack_idx
-        lda #$ff
-        sta stack_idx+1
+        ldx stack_idx
+        lda #$01
+        sta #STACK_BASE,X
+        lda #240
+        sta #(STACK_BASE+1),X
 
         lda stack_idx
-        cmp #(STACK_TOP - STACK_SIZE)
-        bpl .no_wrap
-        lda #(STACK_TOP - NOTE_SIZE)
-        sta stack_idx
+        bne .no_wrap
+        lda #STACK_SIZE
 .no_wrap:
         sec
         sbc #NOTE_SIZE
         sta stack_idx
     ENDM
 
-;;; TODO:
-    MAC DISPLAY_NOTES
-        lda stack_idx
-        sta tmp
-        ldx #(STACK_SIZE - 1)
+    MAC UPDATE_NOTES
+        ldx #(STACK_SIZE - NOTE_SIZE)
 .loop:
-
+        lda #(STACK_BASE+1),X
+        beq .next_note
+        dec #(STACK_BASE+1),X
+.next_note:
+    REPEAT NOTE_SIZE
         dex
+    REPEND
         bpl .loop
     ENDM
+
 
 ;;; Functions used in main
 fx_init:        SUBROUTINE
         ;; Init stack
-        lda #(STACK_TOP - NOTE_SIZE)
+        lda #(STACK_SIZE - NOTE_SIZE)
         sta stack_idx
 
-        ;; Init colors
+        ;; Init Ball
         lda #$ff
-        sta COLUPF
+        sta COLUPF              ; color
+        lda #$30
+        sta CTRLPF
 	rts
 
 fx_vblank:      SUBROUTINE
-        lda #$0                  ; Drum
+        lda #$40                  ; Drum
         sta tmp
         IS_NEW_NOTE
         bne .end
-        lda #0
-        sta posy
+        PUSH_NOTE
 .end:
-        inc posy
+        UPDATE_NOTES
 	rts
 
+;;; Updates X reg and tmp var
+    MAC FETCH_NEXT_STACK_NOTE
+    REPEAT NOTE_SIZE
+        inx
+    REPEND
+        cpx #STACK_SIZE
+        bne .nowrap
+        ldx #0
+.nowrap:
+        lda #(STACK_BASE+1),X
+        sta tmp
+    ENDM
+
+
 fx_kernel:      SUBROUTINE
-        ldy #0
-.next_line:
-        cpy posy
+        ldx stack_idx
+        FETCH_NEXT_STACK_NOTE
+
+        ldy #240
+.loop:
+        cpy tmp
         bne .no_disp
+
         lda #2
         sta ENABL
-        jmp .continue
+        FETCH_NEXT_STACK_NOTE
+        beq .next_line          ; unconditional
 .no_disp:
         lda #0
         sta ENABL
-.continue:
+.next_line:
 	sta WSYNC
-        iny
-        cpy #240
-        bne .next_line
+        dey
+        bne .loop
 
         lda #0
         sta ENABL

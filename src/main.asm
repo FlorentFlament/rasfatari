@@ -13,7 +13,7 @@
 	ORG     $0080
 
 framecnt        DS.B	1
-        INCLUDE "JahBah_variables.asm"
+        INCLUDE "JahBah-full_variables.asm"
         INCLUDE "fx_vars.asm"
 
 ;;;-----------------------------------------------------------------------------
@@ -23,7 +23,7 @@ framecnt        DS.B	1
 	ORG $F000
 
 init:   CLEAN_START		; Initializes Registers & Memory
-        INCLUDE "JahBah_init.asm"
+        INCLUDE "JahBah-full_init.asm"
 	jsr     fx_init
 
 main_loop:
@@ -58,7 +58,7 @@ wait_timint:
 	beq wait_timint
 	rts
 
-        INCLUDE "JahBah_trackdata.asm"
+        INCLUDE "JahBah-full_trackdata.asm"
 	INCLUDE "fx.asm"
 
 

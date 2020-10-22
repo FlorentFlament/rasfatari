@@ -41,8 +41,8 @@
 ;;; Push a note into our circular notes stack
 ;;; Uses X and A registers
     MAC PUSH_NOTE
+        GET_CURRENT_NOTE        ; INTO A
         ldx stack_idx
-        lda #$01
         sta #STACK_BASE,X
         lda #240
         sta #(STACK_BASE+1),X
@@ -69,6 +69,46 @@
         bpl .loop
     ENDM
 
+;;; Updates X reg and tmp var
+;;; Store it in cur_note
+    MAC FETCH_NEXT_STACK_NOTE
+    REPEAT NOTE_SIZE
+        inx
+    REPEND
+        cpx #STACK_SIZE
+        bne .nowrap
+        ldx #0
+.nowrap:
+        lda #(STACK_BASE),X
+        sta cur_note
+        lda #(STACK_BASE+1),X
+        sta cur_note+1
+    ENDM
+
+;;; Horizontal position must be in cur_note
+;;; Argument is the object to use (P0, P1, M0, M1, BL)
+    MAC POSITION_NOTE
+        lda cur_note
+        and #$1f
+        asl
+        sec
+        ; Beware ! this loop must not cross a page !
+        echo "[FX position dot Loop]", ({1})d, "start :", *
+.rough_loop:
+        ; The pos_star loop consumes 15 (5*3) pixels
+        sbc #$0f              ; 2 cycles
+        bcs .rough_loop ; 3 cycles
+        echo "[FX position dot Loop]", ({1})d, "end :", *
+        sta RES{1}
+
+        ; A register has value is in [-15 .. -1]
+        adc #$07 ; A in [-8 .. 6]
+        eor #$ff ; A in [-7 .. 7]
+    REPEAT 4
+        asl
+    REPEND
+        sta HM{1} ; Fine position of missile or sprite
+    ENDM
 
 ;;; Functions used in main
 fx_init:        SUBROUTINE
@@ -84,7 +124,7 @@ fx_init:        SUBROUTINE
 	rts
 
 fx_vblank:      SUBROUTINE
-        lda #$40                  ; Drum
+        lda #$40
         sta tmp
         IS_NEW_NOTE
         bne .end
@@ -93,19 +133,6 @@ fx_vblank:      SUBROUTINE
         UPDATE_NOTES
 	rts
 
-;;; Updates X reg and tmp var
-    MAC FETCH_NEXT_STACK_NOTE
-    REPEAT NOTE_SIZE
-        inx
-    REPEND
-        cpx #STACK_SIZE
-        bne .nowrap
-        ldx #0
-.nowrap:
-        lda #(STACK_BASE+1),X
-        sta tmp
-    ENDM
-
 
 fx_kernel:      SUBROUTINE
         ldx stack_idx
@@ -113,18 +140,21 @@ fx_kernel:      SUBROUTINE
 
         ldy #240
 .loop:
-        cpy tmp
+        cpy cur_note+1
         bne .no_disp
-
+        POSITION_NOTE BL
         lda #2
         sta ENABL
+	; Commit position
+	sta WSYNC
+	sta HMOVE
         FETCH_NEXT_STACK_NOTE
-        beq .next_line          ; unconditional
+        jmp .next_line
 .no_disp:
         lda #0
         sta ENABL
-.next_line:
 	sta WSYNC
+.next_line:
         dey
         bne .loop
 

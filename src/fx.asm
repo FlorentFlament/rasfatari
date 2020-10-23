@@ -32,6 +32,7 @@
         and #$e0                ; Cut frequency
         cmp tmp
         beq .end                ; Instr/Perc found
+        ;; bne .end
 .not_found:
         dex
         bpl .channels_loop      ; try other channel
@@ -91,6 +92,7 @@
         lda cur_note
         and #$1f
         asl
+        asl
         sec
         ; Beware ! this loop must not cross a page !
         echo "[FX position dot Loop]", ({1})d, "start :", *
@@ -110,11 +112,27 @@
         sta HM{1} ; Fine position of missile or sprite
     ENDM
 
+    MAC SET_COLOR
+        lda cur_note
+        and #$e0
+        cmp #$60
+        beq .green
+        lda #$2e
+        jmp .end
+.green:
+        lda #$3a
+.end:
+        sta COLUPF
+    ENDM
+
 ;;; Functions used in main
 fx_init:        SUBROUTINE
         ;; Init stack
         lda #(STACK_SIZE - NOTE_SIZE)
         sta stack_idx
+        ;; Init state
+        lda #0
+        sta state
 
         ;; Init Ball
         lda #$ff
@@ -127,7 +145,12 @@ fx_vblank:      SUBROUTINE
         lda #$40
         sta tmp
         IS_NEW_NOTE
+        beq .new_note
+        lda #$60
+        sta tmp
+        IS_NEW_NOTE
         bne .end
+.new_note:
         PUSH_NOTE
 .end:
         UPDATE_NOTES
@@ -136,30 +159,47 @@ fx_vblank:      SUBROUTINE
 
 fx_kernel:      SUBROUTINE
         ldx stack_idx
-        FETCH_NEXT_STACK_NOTE
-
         ldy #240
 .loop:
+        lda state
+        cmp #1
+        sta WSYNC
+        beq .position_note      ; state == 1
+        bcc .fetch_note         ; state == 0
+        ;; wait and draw        ; state == 2
         cpy cur_note+1
-        bne .no_disp
-        POSITION_NOTE BL
+        bcs .no_disp           ; cur_line >= cur_note(line)
+        ;; cur_line < cur_note(line)
+        ;; Displaying line
+        STA HMOVE
         lda #2
         sta ENABL
-	; Commit position
-	sta WSYNC
-	sta HMOVE
+        lda #0
+        sta state
+        jmp .next_line
+.position_note:
+        lda #0
+        sta ENABL
+        POSITION_NOTE BL
+        inc state
+        jmp .next_line
+.fetch_note:
+        lda #0
+        sta ENABL
         FETCH_NEXT_STACK_NOTE
+        SET_COLOR
+        inc state
         jmp .next_line
 .no_disp:
         lda #0
         sta ENABL
-	sta WSYNC
 .next_line:
         dey
         bne .loop
 
         lda #0
         sta ENABL
+        sta state
         rts
 
 fx_overscan:    SUBROUTINE

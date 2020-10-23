@@ -1,48 +1,24 @@
 ;;; Get current note being played
-;;; X reg value corresponds to channel to be tested (0 or 1)
-;;; Y and A are used
+;;; the channel must be passed as a macro argument (c0 or c1)
+;;; Y is used
+;;; Current note is returned in A
     MAC GET_CURRENT_NOTE
-        ldy tt_cur_pat_index_c0,x       ; get current pattern (index into tt_SequenceTable)
+        ldy tt_cur_pat_index_{1}       ; get current pattern (index into tt_SequenceTable)
         lda tt_SequenceTable,y
         tay
         lda tt_PatternPtrLo,y
         sta tt_ptr
         lda tt_PatternPtrHi,y
         sta tt_ptr+1
-        ldy tt_cur_note_index_c0,x
+        ldy tt_cur_note_index_{1}
         lda (tt_ptr),y
     ENDM
 
-;;; Test if the instrument or percussion in `tmp` starts to play on any channel
-;;; Note that instruments in `tmp` must have the frequency set to 0
-;;; Z flag is set if `tmp` instrument/drum starts to play
-;;; regs A, X, Y are used
-    MAC IS_NEW_NOTE
-        lda tt_timer
-        cmp #TT_SPEED-1
-        bne .end
-
-        ldx #1
-.channels_loop:
-        GET_CURRENT_NOTE
-        cmp #TT_FIRST_PERC      ; Percussions and instruments have values >= TT_FIRST_PERC
-        bcc .not_found
-
-        ;; TODO: Update if more than one drum is used
-        and #$e0                ; Cut frequency
-        cmp tmp
-        beq .end                ; Instr/Perc found
-        ;; bne .end
-.not_found:
-        dex
-        bpl .channels_loop      ; try other channel
-.end:
-    ENDM
-
 ;;; Push a note into our circular notes stack
+;;; the channel must be passed as a macro argument (c0 or c1)
 ;;; Uses X and A registers
     MAC PUSH_NOTE
-        GET_CURRENT_NOTE        ; INTO A
+        GET_CURRENT_NOTE {1}       ; INTO A
         ldx stack_idx
         sta #STACK_BASE,X
         lda #240
@@ -68,6 +44,27 @@
         dex
     REPEND
         bpl .loop
+    ENDM
+
+;;; Test if the instrument or percussion in `tmp` starts to play on any channel
+;;; Note that instruments in `tmp` must have the frequency set to 0
+;;; Z flag is set if `tmp` instrument/drum starts to play
+;;; regs A, X, Y are used
+    MAC PUSH_NEW_NOTES
+        lda tt_timer
+        cmp #TT_SPEED-1
+        bne .end
+
+        GET_CURRENT_NOTE c0
+        cmp #TT_FIRST_PERC      ; Percussions and instruments have values >= TT_FIRST_PERC
+        bcc .next_chan
+        PUSH_NOTE c0
+.next_chan:
+        GET_CURRENT_NOTE c1
+        cmp #TT_FIRST_PERC      ; Percussions and instruments have values >= TT_FIRST_PERC
+        bcc .end
+        PUSH_NOTE c1
+.end:
     ENDM
 
 ;;; Updates X reg and tmp var
@@ -114,13 +111,7 @@
     MAC SET_COLOR
         lda cur_note
         and #$e0
-        cmp #$60
-        beq .green
-        lda #$2e
-        jmp .end
-.green:
-        lda #$3a
-.end:
+        ora #$0a
         sta COLUPF
     ENDM
 
@@ -143,15 +134,7 @@ fx_init:        SUBROUTINE
 fx_vblank:      SUBROUTINE
         lda #$40
         sta tmp
-        IS_NEW_NOTE
-        beq .new_note
-        lda #$60
-        sta tmp
-        IS_NEW_NOTE
-        bne .end
-.new_note:
-        PUSH_NOTE
-.end:
+        PUSH_NEW_NOTES
         UPDATE_NOTES
 	rts
 

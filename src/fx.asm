@@ -92,7 +92,6 @@
         lda cur_note
         and #$1f
         asl
-        asl
         sec
         ; Beware ! this loop must not cross a page !
         echo "[FX position dot Loop]", ({1})d, "start :", *

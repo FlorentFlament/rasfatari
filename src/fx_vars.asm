@@ -1,5 +1,5 @@
 STACK_TOP       = $f8
-STACK_SIZE      = 60
+STACK_SIZE      = 100
 NOTE_SIZE       = 2
 STACK_BASE      = (STACK_TOP - STACK_SIZE)
 

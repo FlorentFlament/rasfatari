@@ -2,6 +2,9 @@
 ;;; the channel must be passed as a macro argument (c0 or c1)
 ;;; Y is used
 ;;; Current note is returned in A
+;;;
+;;; - Bits 7..5: instrument
+;;; - Bits 4..0: frequency
     MAC GET_CURRENT_NOTE
         ldy tt_cur_pat_index_{1}       ; get current pattern (index into tt_SequenceTable)
         lda tt_SequenceTable,y
@@ -17,8 +20,11 @@
 ;;; Push a note into our circular notes stack
 ;;; the channel must be passed as a macro argument (c0 or c1)
 ;;; Uses X and A registers
-    MAC PUSH_NOTE
-        GET_CURRENT_NOTE {1}       ; INTO A
+    MAC PUSH_NEW_NOTE
+        GET_CURRENT_NOTE {1}    ; INTO A
+        cmp #TT_FIRST_PERC      ; Percussions and instruments have values >= TT_FIRST_PERC
+        bcc .end
+        ;; TODO: "Scale" frequency
         ldx stack_idx
         sta #STACK_BASE,X
         lda #240
@@ -31,6 +37,7 @@
         sec
         sbc #NOTE_SIZE
         sta stack_idx
+.end:
     ENDM
 
     MAC UPDATE_NOTES
@@ -38,7 +45,10 @@
 .loop:
         lda #(STACK_BASE+1),X
         beq .next_note
+        ;; TODO: Make speed parametrizable
+    REPEAT 1 ; speed
         dec #(STACK_BASE+1),X
+    REPEND
 .next_note:
     REPEAT NOTE_SIZE
         dex
@@ -54,16 +64,8 @@
         lda tt_timer
         cmp #TT_SPEED-1
         bne .end
-
-        GET_CURRENT_NOTE c0
-        cmp #TT_FIRST_PERC      ; Percussions and instruments have values >= TT_FIRST_PERC
-        bcc .next_chan
-        PUSH_NOTE c0
-.next_chan:
-        GET_CURRENT_NOTE c1
-        cmp #TT_FIRST_PERC      ; Percussions and instruments have values >= TT_FIRST_PERC
-        bcc .end
-        PUSH_NOTE c1
+        PUSH_NEW_NOTE c0
+        PUSH_NEW_NOTE c1
 .end:
     ENDM
 

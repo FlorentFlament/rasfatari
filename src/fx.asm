@@ -161,12 +161,6 @@ fx_kernel:      SUBROUTINE
         lda #0
         sta state
         jmp .next_line
-.position_note:
-        lda #0
-        sta ENABL
-        POSITION_NOTE BL
-        inc state
-        jmp .next_line
 .fetch_note:
         lda #0
         sta ENABL
@@ -177,6 +171,13 @@ fx_kernel:      SUBROUTINE
 .no_disp:
         lda #0
         sta ENABL
+        jmp .next_line
+.position_note:
+        lda #0
+        sta ENABL
+        POSITION_NOTE BL
+        inc state
+        ;; Go to next line
 .next_line:
         dey
         bne .loop

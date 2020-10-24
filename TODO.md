@@ -8,10 +8,22 @@ FXs
 
 ### Notes rain
 
-* Colors of notes
-* State machine for Multiple instruments
+* Finish tuning main display loop
+* Nice Full screen
 * Notes length depending on enveloppe (poc)
-* Snake moving upwards (same FX or different FX?)
+* multiple objects (sprites, ball, missiles) ? - Improved state machine / workflow
+* Naturally using 2 chans
+* mores parallel zones ?
+* Choosing which notes to display
+* Modular code / to variate the effects (ex notes selection, all the notes).
+
+```
+@flew en fait ce FX est tellement cool qu'il se suffit à lui même (si on a la progression barres, puis sprites et sprites qui bougent) ... ça tiendrais en 4Ko ou on commence déjà a bien dégueuler ? Un screen in/off, un bandeau pour habiller, et hop !
+```
+
+### Snakes
+
+* Snakes moving upwards (same FX or different FX?)
 
 ```
 glafoukAujourd’hui à 10:20

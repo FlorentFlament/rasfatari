@@ -89,19 +89,20 @@
 ;;; Argument is the object to use (P0, P1, M0, M1, BL)
     MAC POSITION_NOTE
         lda cur_note
-        and #$1f
+        and #$1f                ; Extract frequency / position
         asl
+        SLEEP 20
         sec
         ; Beware ! this loop must not cross a page !
-        echo "[FX position dot Loop]", ({1})d, "start :", *
+        echo "[FX position note Loop]", ({1})d, "start :", *
 .rough_loop:
-        ; The pos_star loop consumes 15 (5*3) pixels
+        ; The rough_loop consumes 15 (5*3) pixels
         sbc #$0f              ; 2 cycles
         bcs .rough_loop ; 3 cycles
-        echo "[FX position dot Loop]", ({1})d, "end :", *
+        echo "[FX position note Loop]", ({1})d, "end :", *
         sta RES{1}
 
-        ; A register has value is in [-15 .. -1]
+        ; A register has value in [-15 .. -1]
         adc #$07 ; A in [-8 .. 6]
         eor #$ff ; A in [-7 .. 7]
     REPEAT 4
@@ -141,43 +142,77 @@ fx_vblank:      SUBROUTINE
 	rts
 
 
+;;; State machine actions
+
+    MAC S0_FETCH_NOTE
+        sta WSYNC
+        lda #0
+        sta ENABL
+        FETCH_NEXT_STACK_NOTE
+        SET_COLOR
+        inc state
+    ENDM
+
+    ;; Beware, this action has 2 WSYNCs
+    MAC S1_POSITION_NOTE
+        sta WSYNC
+        POSITION_NOTE BL
+        sta WSYNC
+        sta HMOVE
+        inc state
+    ENDM
+
+    MAC S2_NOSYNC_WAIT_OR_DRAW
+        cpy cur_note + 1
+        bcs .no_disp           ; cur_line >= cur_note(line)
+        ;; cur_line < cur_note(line)
+        ;; Displaying line
+        lda #2
+        sta ENABL
+        lda #0
+        sta state
+        beq .end                ; inconditional
+.no_disp:
+        inc state
+.end:
+    ENDM
+
+    MAC S3_WAIT_OR_DRAW
+        sta WSYNC
+        cpy cur_note + 1
+        bcs .no_disp           ; cur_line >= cur_note(line)
+        ;; cur_line < cur_note(line)
+        ;; Displaying line
+        lda #2
+        sta ENABL
+        lda #0
+        sta state
+.no_disp:
+    ENDM
+
+
 fx_kernel:      SUBROUTINE
         ldx stack_idx
         ldy #240
 .loop:
         lda state
         cmp #1
-        sta WSYNC
         beq .position_note      ; state == 1
         bcc .fetch_note         ; state == 0
-        ;; wait and draw        ; state == 2
-        cpy cur_note+1
-        bcs .no_disp           ; cur_line >= cur_note(line)
-        ;; cur_line < cur_note(line)
-        ;; Displaying line
-        STA HMOVE
-        lda #2
-        sta ENABL
-        lda #0
-        sta state
+        ;; state >= 2
+        cmp #3
+        bcc .nosync_wait_or_draw ; state == 2
+        ;; state == 3
+        S3_WAIT_OR_DRAW
+        jmp .next_line
+.nosync_wait_or_draw:
+        S2_NOSYNC_WAIT_OR_DRAW
         jmp .next_line
 .fetch_note:
-        lda #0
-        sta ENABL
-        FETCH_NEXT_STACK_NOTE
-        SET_COLOR
-        inc state
-        jmp .next_line
-.no_disp:
-        lda #0
-        sta ENABL
+        S0_FETCH_NOTE
         jmp .next_line
 .position_note:
-        lda #0
-        sta ENABL
-        POSITION_NOTE BL
-        inc state
-        ;; Go to next line
+        S1_POSITION_NOTE
 .next_line:
         dey
         bne .loop

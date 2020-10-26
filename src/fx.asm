@@ -162,7 +162,7 @@ fx_vblank:      SUBROUTINE
         inc state
     ENDM
 
-    MAC S2_NOSYNC_WAIT_OR_DRAW
+    MAC S1_NOSYNC_WAIT_OR_DRAW
         cpy cur_note + 1
         bcs .no_disp           ; cur_line >= cur_note(line)
         ;; cur_line < cur_note(line)
@@ -171,23 +171,12 @@ fx_vblank:      SUBROUTINE
         sta ENABL
         lda #0
         sta state
-        beq .end                ; inconditional
 .no_disp:
-        inc state
-.end:
     ENDM
 
-    MAC S3_WAIT_OR_DRAW
+    MAC S2_WAIT_OR_DRAW
         sta WSYNC
-        cpy cur_note + 1
-        bcs .no_disp           ; cur_line >= cur_note(line)
-        ;; cur_line < cur_note(line)
-        ;; Displaying line
-        lda #2
-        sta ENABL
-        lda #0
-        sta state
-.no_disp:
+        S1_NOSYNC_WAIT_OR_DRAW
     ENDM
 
 
@@ -199,24 +188,23 @@ fx_kernel:      SUBROUTINE
         cmp #1
         beq .position_note      ; state == 1
         bcc .fetch_note         ; state == 0
-        ;; state >= 2
-        cmp #3
-        bcc .nosync_wait_or_draw ; state == 2
-        ;; state == 3
-        S3_WAIT_OR_DRAW
-        jmp .next_line
-.nosync_wait_or_draw:
-        S2_NOSYNC_WAIT_OR_DRAW
+        ;; state == 2
+        S2_WAIT_OR_DRAW
         jmp .next_line
 .fetch_note:
         S0_FETCH_NOTE
         jmp .next_line
 .position_note:
         S1_POSITION_NOTE
+        dey
+        beq .end
+        S1_NOSYNC_WAIT_OR_DRAW
 .next_line:
         dey
-        bne .loop
+        beq .end
+        jmp .loop
 
+.end:
         lda #0
         sta ENABL
         sta state

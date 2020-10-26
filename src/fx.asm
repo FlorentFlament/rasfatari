@@ -25,6 +25,8 @@
         cmp #TT_FIRST_PERC      ; Percussions and instruments have values >= TT_FIRST_PERC
         bcc .end
         ;; TODO: "Scale" frequency
+        sec
+        sbc 4
         ldx stack_idx
         sta #STACK_BASE,X
         lda #240
@@ -87,11 +89,12 @@
 
 ;;; Horizontal position must be in cur_note
 ;;; Argument is the object to use (P0, P1, M0, M1, BL)
+;;; current note frequency must be loaded into A
+;;; i.e cur_note & 0x1f
     MAC POSITION_NOTE
-        lda cur_note
-        and #$1f                ; Extract frequency / position
         asl
-        SLEEP 20
+        asl
+        SLEEP 5
         sec
         ; Beware ! this loop must not cross a page !
         echo "[FX position note Loop]", ({1})d, "start :", *
@@ -156,8 +159,16 @@ fx_vblank:      SUBROUTINE
     ;; Beware, this action has 2 WSYNCs
     MAC S1_POSITION_NOTE
         sta WSYNC
+        lda cur_note
+        and #$1f                ; Extract frequency / position
+        cmp #20
+        bpl .no_wsync
         POSITION_NOTE BL
         sta WSYNC
+        jmp .end
+.no_wsync:
+        POSITION_NOTE BL
+.end:
         sta HMOVE
         inc state
     ENDM

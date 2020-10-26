@@ -1,3 +1,5 @@
+MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
+
 ;;; Get current note being played
 ;;; the channel must be passed as a macro argument (c0 or c1)
 ;;; Y is used
@@ -19,69 +21,28 @@
 
 ;;; Push a note into our circular notes stack
 ;;; the channel must be passed as a macro argument (c0 or c1)
-;;; Uses X and A registers
+;;; Uses Y and A registers
     MAC PUSH_NEW_NOTE
         GET_CURRENT_NOTE {1}    ; INTO A
-        cmp #TT_FIRST_PERC      ; Percussions and instruments have values >= TT_FIRST_PERC
-        bcc .end
-        sec
-        sbc 4
-        ldx stack_idx
-        sta #STACK_BASE,X
-        lda #240
-        sta #(STACK_BASE+1),X
-
-        lda stack_idx
+        ldy stack_idx
+        sta #STACK_BASE,Y ; doesn't touch flags
         bne .no_wrap
-        lda #STACK_SIZE
+        ldy #STACK_SIZE
 .no_wrap:
-        sec
-        sbc #NOTE_SIZE
-        sta stack_idx
-.end:
+        dey
+        sty stack_idx
     ENDM
 
-    MAC UPDATE_NOTES
-        ldx #(STACK_SIZE - NOTE_SIZE)
-.loop:
-        lda #(STACK_BASE+1),X
-        beq .next_note
-        ;; TODO: Make speed parametrizable
-    REPEAT 1 ; speed
-        dec #(STACK_BASE+1),X
-    REPEND
-.next_note:
-    REPEAT NOTE_SIZE
-        dex
-    REPEND
-        bpl .loop
-    ENDM
-
-;;; regs A, X, Y are used
-    MAC PUSH_NEW_NOTES
-        lda tt_timer
-        cmp #TT_SPEED-1
-        bne .end
-        PUSH_NEW_NOTE c0
-        PUSH_NEW_NOTE c1
-.end:
-    ENDM
-
-;;; Updates tmp reg
+;;; tmp contains the stack index to use and is updated
 ;;; Store next note in cur_note (and cur_note+1)
-;;; A value is cur_note; Can be used by SET_COLOR
-    MAC FETCH_NEXT_STACK_NOTE
+    MAC FETCH_NEXT_NOTE
         ldx tmp
-    REPEAT NOTE_SIZE
         inx
-    REPEND
         cpx #STACK_SIZE
         bne .nowrap
         ldx #0
 .nowrap:
         stx tmp
-        lda #(STACK_BASE+1),X
-        sta cur_note+1
         lda #(STACK_BASE),X
         sta cur_note
     ENDM
@@ -90,10 +51,10 @@
 ;;; Argument is the object to use (P0, P1, M0, M1, BL)
 ;;; current note frequency must be loaded into A
 ;;; i.e cur_note & 0x1f
-    MAC POSITION_NOTE
+    MAC POSITION_MOVABLE
         asl
         asl
-        SLEEP 5
+        SLEEP 2
         sec
         ; Beware ! this loop must not cross a page !
         echo "[FX position note Loop]", ({1})d, "start :", *
@@ -113,25 +74,50 @@
         sta HM{1} ; Fine position of missile or sprite
     ENDM
 
-;;; A register must containt cur_note
-    MAC SET_COLOR
+s_position_movable:     SUBROUTINE
+        POSITION_MOVABLE BL
+        rts
+
+;;; Beware, this action has 2 WSYNCs
+    MAC POSITION_NOTE
+        lda #0
+        sta COLUPF
+        lda cur_note
+        and #$1f ; Extract note frequency
+        cmp #20                 ; If the note is far on the right, we must skip the WSYNC
+                                ; This threshold is not tuned yet (though seems to be good)
+        bpl .no_wsync
+        sta WSYNC
+        jsr s_position_movable
+        sta WSYNC
+        jmp .end
+.no_wsync:
+        sta WSYNC
+        jsr s_position_movable
+.end:
+        sta HMOVE
+    ENDM
+
+;;; Uses A and X
+    MAC DRAW_NOTES
         lda cur_note
         REPEAT 5
         lsr
         REPEND
         tax
-        lda colors_table,X
+        lda colors_table,X ; Maybe we will need this lookup into fetch_next_note
+        sta WSYNC
         sta COLUPF
+        lda #2
+        sta ENABL
+.no_disp:
     ENDM
 
 ;;; Functions used in main
 fx_init:        SUBROUTINE
         ;; Init stack
-        lda #(STACK_SIZE - NOTE_SIZE)
+        lda #(STACK_SIZE - 1)
         sta stack_idx
-        ;; Init state
-        lda #0
-        sta state
 
         ;; Init Ball
         lda #$ff
@@ -141,87 +127,51 @@ fx_init:        SUBROUTINE
 	rts
 
 fx_vblank:      SUBROUTINE
-        PUSH_NEW_NOTES
-        UPDATE_NOTES
+        lda tt_timer
+        cmp #TT_SPEED-1
+        bne .end
+        PUSH_NEW_NOTE c0
+        ;; PUSH_NEW_NOTE c1
+.end:
+        lda stack_idx
+        sta tmp ; Used to iterate on the stack
+        FETCH_NEXT_NOTE
+        POSITION_NOTE
 	rts
 
 
-;;; State machine actions
-
-    MAC S0_FETCH_NOTE
-        FETCH_NEXT_STACK_NOTE
-        lda #0
-        sta ENABL
-        SET_COLOR
-        inc state
-    ENDM
-
-    ;; Beware, this action has 2 WSYNCs
-    MAC S1_POSITION_NOTE
-        sta WSYNC
-        lda cur_note
-        and #$1f                ; Extract frequency / position
-        cmp #20                 ; If the note is far on the right, we must skip the WSYNC
-                                ; This threshold is not tuned yet (though seems to be good)
-        bpl .no_wsync
-        POSITION_NOTE BL
-        sta WSYNC
-        jmp .end
-.no_wsync:
-        POSITION_NOTE BL
-.end:
-        sta HMOVE
-        inc state
-    ENDM
-
-;;; Y must contains current line count
-    MAC S1_NOSYNC_WAIT_OR_DRAW
-        cpy cur_note + 1
-        bcs .no_disp           ; cur_line >= cur_note(line)
-        ;; cur_line < cur_note(line)
-        ;; Displaying line
-        lda #2
-        sta ENABL
-        lda #0
-        sta state
-.no_disp:
-    ENDM
-
-    MAC S2_WAIT_OR_DRAW
-        sta WSYNC
-        S1_NOSYNC_WAIT_OR_DRAW
-    ENDM
-
-
 fx_kernel:      SUBROUTINE
-        ldx stack_idx
-        stx tmp ; Used to iterate on the stack
-        ldy #240
-.loop:
-        lda state
-        cmp #1
-        beq .position_note      ; state == 1
-        bcc .fetch_note         ; state == 0
-        ;; state == 2
-        S2_WAIT_OR_DRAW
-        jmp .next_line
-.fetch_note:
-        S0_FETCH_NOTE
-        jmp .next_line
-.position_note:
-        S1_POSITION_NOTE
+        sec
+        lda #4
+        sbc tt_timer
+        tay
+.pre_loop:
+        sta WSYNC
         dey
-        beq .end
-        S1_NOSYNC_WAIT_OR_DRAW
-.next_line:
-        dey
-        beq .end
-        jmp .loop
+        bpl .pre_loop
 
+        ldy #MAX_TIME
+.loop:  ; 5 lines per loop
+        FETCH_NEXT_NOTE ; into cur_note as well as A reg
+        cmp #TT_FIRST_PERC ; Percussions and instruments have values >= TT_FIRST_PERC
+        REPEAT 2
+        sta WSYNC
+        REPEND
+        bcs .new_note
+        REPEAT 3
+        sta WSYNC
+        REPEND
+        jmp .continue
+.new_note:
+        POSITION_NOTE
+        DRAW_NOTES
+.continue:
+        dey
+        bmi .end
+        jmp .loop
 .end:
         lda #0
         sta ENABL
-        sta state
         rts
 
 fx_overscan:    SUBROUTINE
@@ -238,3 +188,7 @@ fx_overscan:    SUBROUTINE
 ;;; Chords (6): Red - 6a
 colors_table:
         dc.b $0e, $3c, $38, $2c, $4a, $c8, $6a, $0e
+
+;;; Transform 4,3,2,1,0 into 0,1,2,3,4
+desc_table:
+        dc.b 4, 3, 2, 1, 0

@@ -57,9 +57,6 @@
         bpl .loop
     ENDM
 
-;;; Test if the instrument or percussion in `tmp` starts to play on any channel
-;;; Note that instruments in `tmp` must have the frequency set to 0
-;;; Z flag is set if `tmp` instrument/drum starts to play
 ;;; regs A, X, Y are used
     MAC PUSH_NEW_NOTES
         lda tt_timer
@@ -70,9 +67,11 @@
 .end:
     ENDM
 
-;;; Updates X reg and tmp var
-;;; Store it in cur_note
+;;; Updates tmp reg
+;;; Store next note in cur_note (and cur_note+1)
+;;; A value is cur_note; Can be used by SET_COLOR
     MAC FETCH_NEXT_STACK_NOTE
+        ldx tmp
     REPEAT NOTE_SIZE
         inx
     REPEND
@@ -80,10 +79,11 @@
         bne .nowrap
         ldx #0
 .nowrap:
-        lda #(STACK_BASE),X
-        sta cur_note
+        stx tmp
         lda #(STACK_BASE+1),X
         sta cur_note+1
+        lda #(STACK_BASE),X
+        sta cur_note
     ENDM
 
 ;;; Horizontal position must be in cur_note
@@ -113,10 +113,14 @@
         sta HM{1} ; Fine position of missile or sprite
     ENDM
 
+;;; A register must containt cur_note
     MAC SET_COLOR
         lda cur_note
-        and #$e0
-        ora #$0a
+        REPEAT 5
+        lsr
+        REPEND
+        tax
+        lda colors_table,X
         sta COLUPF
     ENDM
 
@@ -137,8 +141,6 @@ fx_init:        SUBROUTINE
 	rts
 
 fx_vblank:      SUBROUTINE
-        lda #$40
-        sta tmp
         PUSH_NEW_NOTES
         UPDATE_NOTES
 	rts
@@ -147,10 +149,9 @@ fx_vblank:      SUBROUTINE
 ;;; State machine actions
 
     MAC S0_FETCH_NOTE
-        sta WSYNC
+        FETCH_NEXT_STACK_NOTE
         lda #0
         sta ENABL
-        FETCH_NEXT_STACK_NOTE
         SET_COLOR
         inc state
     ENDM
@@ -160,7 +161,8 @@ fx_vblank:      SUBROUTINE
         sta WSYNC
         lda cur_note
         and #$1f                ; Extract frequency / position
-        cmp #20
+        cmp #20                 ; If the note is far on the right, we must skip the WSYNC
+                                ; This threshold is not tuned yet (though seems to be good)
         bpl .no_wsync
         POSITION_NOTE BL
         sta WSYNC
@@ -172,6 +174,7 @@ fx_vblank:      SUBROUTINE
         inc state
     ENDM
 
+;;; Y must contains current line count
     MAC S1_NOSYNC_WAIT_OR_DRAW
         cpy cur_note + 1
         bcs .no_disp           ; cur_line >= cur_note(line)
@@ -192,6 +195,7 @@ fx_vblank:      SUBROUTINE
 
 fx_kernel:      SUBROUTINE
         ldx stack_idx
+        stx tmp ; Used to iterate on the stack
         ldy #240
 .loop:
         lda state
@@ -223,3 +227,14 @@ fx_kernel:      SUBROUTINE
 fx_overscan:    SUBROUTINE
 	inc framecnt
 	rts
+
+;;; 8 possible colors
+;;; Drum (0): White - 0e
+;;; LeadBeep (1): Light Green - 3c
+;;; leadBeep (2): Dark Green - 38
+;;; SoftBeep (3): Light Yellow - 2c
+;;; SoftBeep (4): Orange - 4a
+;;; Bass (5): Purple - c8
+;;; Chords (6): Red - 6a
+colors_table:
+        dc.b $0e, $3c, $38, $2c, $4a, $c8, $6a, $0e

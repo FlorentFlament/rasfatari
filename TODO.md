@@ -8,8 +8,6 @@ FXs
 
 ### Notes rain
 
-* Finish tuning main display loop
-* Nice Full screen
 * Notes length depending on enveloppe (poc)
 * multiple objects (sprites, ball, missiles) ? - Improved state machine / workflow
 * Naturally using 2 chans

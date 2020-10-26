@@ -24,7 +24,6 @@
         GET_CURRENT_NOTE {1}    ; INTO A
         cmp #TT_FIRST_PERC      ; Percussions and instruments have values >= TT_FIRST_PERC
         bcc .end
-        ;; TODO: "Scale" frequency
         sec
         sbc 4
         ldx stack_idx

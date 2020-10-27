@@ -52,19 +52,21 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 .end:
     ENDM
 
-;;; tmp contains the stack index to use and is updated
 ;;; Store next note in cur_note
+;;; channel must be provided as argument (c0 or c1)
 ;;; Uses X and A
+;;; X get stack_idkern value
+;;; A get cur_note
     MAC FETCH_NEXT_NOTE
-        ldx tmp
+        ldx stack_idkern
         inx
         cpx #STACK_SIZE
         bne .nowrap
         ldx #0
 .nowrap:
-        stx tmp
-        lda #(STACK_BASE_c0),X
-        sta cur_note_c0
+        stx stack_idkern
+        lda #(STACK_BASE_{1}),X
+        sta cur_note_{1}
     ENDM
 
 ;;; Horizontal position must be in cur_note
@@ -99,10 +101,11 @@ s_position_movable:     SUBROUTINE
         rts
 
 ;;; Beware, this action has 2 WSYNCs
+;;; Channel must be provided as argument (c0 or c1)
     MAC POSITION_NOTE
         lda #0
         sta COLUPF
-        lda cur_note_c0
+        lda cur_note_{1}
         and #$1f ; Extract note frequency
         cmp #20                 ; If the note is far on the right, we must skip the WSYNC
                                 ; This threshold is not tuned yet (though seems to be good)
@@ -118,9 +121,10 @@ s_position_movable:     SUBROUTINE
         sta HMOVE
     ENDM
 
+;;; Channel must be provided as argument
 ;;; Uses A and X
     MAC DRAW_NOTES
-        lda cur_note_c0
+        lda cur_note_{1}
         REPEAT 5
         lsr
         REPEND
@@ -155,9 +159,9 @@ fx_vblank:      SUBROUTINE
         PUSH_NEW_NOTE c1
         DEC_STACK_IDX
 .end:
-        stx tmp ; Used to iterate on the stack each frame
-        FETCH_NEXT_NOTE
-        POSITION_NOTE
+        stx stack_idkern ; Used to iterate on the stack each frame
+        FETCH_NEXT_NOTE c1
+        POSITION_NOTE c1
 	rts
 
 
@@ -171,10 +175,10 @@ fx_kernel:      SUBROUTINE
         dey
         bpl .pre_loop
 
-        DRAW_NOTES
+        DRAW_NOTES c1
         ldy #MAX_TIME
 .loop:  ; 5 lines per loop
-        FETCH_NEXT_NOTE ; into cur_note as well as A reg
+        FETCH_NEXT_NOTE c1 ; into cur_note as well as A reg
         cmp #TT_FIRST_PERC ; Percussions and instruments have values >= TT_FIRST_PERC
         REPEAT 2
         sta WSYNC
@@ -185,8 +189,8 @@ fx_kernel:      SUBROUTINE
         REPEND
         jmp .continue
 .new_note:
-        POSITION_NOTE
-        DRAW_NOTES
+        POSITION_NOTE c1
+        DRAW_NOTES c1
 .continue:
         dey
         bmi .end

@@ -19,47 +19,37 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         lda (tt_ptr),y
     ENDM
 
-;;; Push a note into our circular notes stack
-;;; the channel must be passed as a macro argument (c0 or c1)
-;;; Uses Y and A registers
-    MAC PUSH_NEW_NOTE
-        GET_CURRENT_NOTE {1}    ; INTO A
-        ldy stack_idx
-        sta #STACK_BASE_{1},Y ; doesn't touch flags
+;;; decreases stack_idx taking into account stack wrapping
+    MAC DEC_STACK_IDX
+        ldx stack_idx
         bne .no_wrap
-        ldy #STACK_SIZE
+        ldx #STACK_SIZE
 .no_wrap:
-        dey
-        sty stack_idx
+        dex
+        stx stack_idx
     ENDM
 
-;;; Swap non-notes (silences) with notes for better display
-;;; Uses A, X, Y, tmp
-    MAC REORDER_NOTES
+;;; Push note of provided channel into a circular notes stacks
+;;; Channel must be provided as argument (c0 or c1)
+;;; stack_idx must be loaded into X and will still be in X at exit
+;;; Uses Y and A registers
+    MAC PUSH_NEW_NOTE
+        GET_CURRENT_NOTE {1}     ; INTO A
+        sta #STACK_BASE_{1},X    ; Store new note on stack_idx (default)
         cmp #TT_FIRST_PERC ; Percussions and instruments have values >= TT_FIRST_PERC
-        bcs .new_note
-        ;; Current note is a "non-note" and must be swapper with the next note
-        ldx stack_idx
+        bcs .end
+.non_note:
+        ;; This is a non_note, we need to swap it with the previous note
         inx
         cpx #STACK_SIZE
-        bne .no_wrap_x
+        bne .no_wrap
         ldx #0
-.no_wrap_x:
-        txa
-        tay
-        iny
-        cpy #STACK_SIZE
-        bne .no_wrap_y
-        ldy #0
-.no_wrap_y:
-        ;; Perform swapping
-        lda #STACK_BASE_c0,Y
-        sta tmp
-        lda #STACK_BASE_c0,X
-        sta #STACK_BASE_c0,Y
-        lda tmp
-        sta #STACK_BASE_c0,X
-.new_note:
+.no_wrap:
+        ldy #STACK_BASE_{1},X
+        sta #STACK_BASE_{1},X
+        ldx stack_idx
+        sty #STACK_BASE_{1},X
+.end:
     ENDM
 
 ;;; tmp contains the stack index to use and is updated
@@ -157,15 +147,15 @@ fx_init:        SUBROUTINE
 	rts
 
 fx_vblank:      SUBROUTINE
+        ldx stack_idx
         lda tt_timer
         cmp #TT_SPEED-1
         bne .end
         PUSH_NEW_NOTE c0
-        ;; PUSH_NEW_NOTE c1
-        REORDER_NOTES
+        PUSH_NEW_NOTE c1
+        DEC_STACK_IDX
 .end:
-        lda stack_idx
-        sta tmp ; Used to iterate on the stack
+        stx tmp ; Used to iterate on the stack each frame
         FETCH_NEXT_NOTE
         POSITION_NOTE
 	rts

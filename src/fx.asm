@@ -220,7 +220,3 @@ fx_overscan:    SUBROUTINE
 ;;; Chords (6): Red - 6a
 colors_table:
         dc.b $0e, $3c, $38, $2c, $4a, $c8, $6a, $0e
-
-;;; Transform 4,3,2,1,0 into 0,1,2,3,4
-desc_table:
-        dc.b 4, 3, 2, 1, 0

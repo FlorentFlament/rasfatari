@@ -33,8 +33,38 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         sty stack_idx
     ENDM
 
+;;; Swap non-notes (silences) with notes for better display
+;;; Uses A, X, Y, tmp
+    MAC REORDER_NOTES
+        cmp #TT_FIRST_PERC ; Percussions and instruments have values >= TT_FIRST_PERC
+        bcs .new_note
+        ;; Current note is a "non-note" and must be swapper with the next note
+        ldx stack_idx
+        inx
+        cpx #STACK_SIZE
+        bne .no_wrap_x
+        ldx #0
+.no_wrap_x:
+        txa
+        tay
+        iny
+        cpy #STACK_SIZE
+        bne .no_wrap_y
+        ldy #0
+.no_wrap_y:
+        ;; Perform swapping
+        lda #STACK_BASE,Y
+        sta tmp
+        lda #STACK_BASE,X
+        sta #STACK_BASE,Y
+        lda tmp
+        sta #STACK_BASE,X
+.new_note:
+    ENDM
+
 ;;; tmp contains the stack index to use and is updated
 ;;; Store next note in cur_note (and cur_note+1)
+;;; Uses X and A
     MAC FETCH_NEXT_NOTE
         ldx tmp
         inx
@@ -132,6 +162,7 @@ fx_vblank:      SUBROUTINE
         bne .end
         PUSH_NEW_NOTE c0
         ;; PUSH_NEW_NOTE c1
+        REORDER_NOTES
 .end:
         lda stack_idx
         sta tmp ; Used to iterate on the stack

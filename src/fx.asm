@@ -207,7 +207,6 @@ fx_kernel:      SUBROUTINE
         rts
 
 fx_overscan:    SUBROUTINE
-	inc framecnt
 	rts
 
 ;;; 8 possible colors

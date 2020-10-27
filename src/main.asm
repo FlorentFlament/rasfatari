@@ -46,6 +46,7 @@ main_loop:
 	lda #22			; (/ (* 26.0 76) 64) = 30.875
 	sta TIM64T
 	jsr fx_overscan
+        inc framecnt
 	jsr wait_timint
 
 	jmp main_loop		; scanline 308 - cycle 15

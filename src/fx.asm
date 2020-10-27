@@ -25,7 +25,7 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
     MAC PUSH_NEW_NOTE
         GET_CURRENT_NOTE {1}    ; INTO A
         ldy stack_idx
-        sta #STACK_BASE,Y ; doesn't touch flags
+        sta #STACK_BASE_{1},Y ; doesn't touch flags
         bne .no_wrap
         ldy #STACK_SIZE
 .no_wrap:
@@ -53,17 +53,17 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         ldy #0
 .no_wrap_y:
         ;; Perform swapping
-        lda #STACK_BASE,Y
+        lda #STACK_BASE_c0,Y
         sta tmp
-        lda #STACK_BASE,X
-        sta #STACK_BASE,Y
+        lda #STACK_BASE_c0,X
+        sta #STACK_BASE_c0,Y
         lda tmp
-        sta #STACK_BASE,X
+        sta #STACK_BASE_c0,X
 .new_note:
     ENDM
 
 ;;; tmp contains the stack index to use and is updated
-;;; Store next note in cur_note (and cur_note+1)
+;;; Store next note in cur_note
 ;;; Uses X and A
     MAC FETCH_NEXT_NOTE
         ldx tmp
@@ -73,8 +73,8 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         ldx #0
 .nowrap:
         stx tmp
-        lda #(STACK_BASE),X
-        sta cur_note
+        lda #(STACK_BASE_c0),X
+        sta cur_note_c0
     ENDM
 
 ;;; Horizontal position must be in cur_note
@@ -112,7 +112,7 @@ s_position_movable:     SUBROUTINE
     MAC POSITION_NOTE
         lda #0
         sta COLUPF
-        lda cur_note
+        lda cur_note_c0
         and #$1f ; Extract note frequency
         cmp #20                 ; If the note is far on the right, we must skip the WSYNC
                                 ; This threshold is not tuned yet (though seems to be good)
@@ -130,7 +130,7 @@ s_position_movable:     SUBROUTINE
 
 ;;; Uses A and X
     MAC DRAW_NOTES
-        lda cur_note
+        lda cur_note_c0
         REPEAT 5
         lsr
         REPEND

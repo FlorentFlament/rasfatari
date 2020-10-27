@@ -8,7 +8,6 @@ FXs
 
 ### Notes rain
 
-* Notes length depending on enveloppe (poc)
 * multiple objects (sprites, ball, missiles) ? - Improved state machine / workflow
 * Naturally using 2 chans
 * mores parallel zones ?

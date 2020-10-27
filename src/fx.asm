@@ -181,6 +181,7 @@ fx_kernel:      SUBROUTINE
         dey
         bpl .pre_loop
 
+        DRAW_NOTES
         ldy #MAX_TIME
 .loop:  ; 5 lines per loop
         FETCH_NEXT_NOTE ; into cur_note as well as A reg

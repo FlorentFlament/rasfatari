@@ -112,8 +112,6 @@ s_position_movable_P1:     SUBROUTINE
 ;;; Beware, this action has 2 WSYNCs
 ;;; Channel must be provided as argument (c0 or c1)
     MAC POSITION_NOTE
-        lda #0
-        sta COLU{2}
         lda cur_note_{1}
         and #$1f ; Extract note frequency
         cmp #20                 ; If the note is far on the right, we must skip the WSYNC
@@ -128,6 +126,13 @@ s_position_movable_P1:     SUBROUTINE
         jsr s_position_movable_{2}
 .end:
         sta HMOVE
+    ENDM
+
+    MAC CLEAR_NOTES
+        sta WSYNC
+        lda #0
+        sta COLUP0
+        sta COLUP1
     ENDM
 
 ;;; Draw notes of both channels
@@ -211,10 +216,10 @@ fx_kernel:      SUBROUTINE
         REPEND
         jmp .continue
 .new_note:
-        POSITION_NOTE c0, P0
-        POSITION_NOTE c1, P1
-        DRAW_NOTES c0
-        DRAW_NOTES c1
+        CLEAR_NOTES             ; 1 WSYNC
+        POSITION_NOTE c0, P0    ; 2 WSYNC
+        POSITION_NOTE c1, P1    ; 2 WSYNC
+        DRAW_NOTES              ; 1 WSYNC
 .continue:
         dec tmp
         bmi .end

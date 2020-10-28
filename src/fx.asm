@@ -52,12 +52,10 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 .end:
     ENDM
 
-;;; Store next note in cur_note
-;;; channel must be provided as argument (c0 or c1)
-;;; Uses X and A
-;;; X get stack_idkern value
-;;; A get cur_note
-    MAC FETCH_NEXT_NOTE
+;;; Increments stack_idkern (possibly wrapping around stack)
+;;; Uses X
+;;; At exit stack_idkern and X contain updated stack_idkern
+    MAC INC_STACK_IDKERN
         ldx stack_idkern
         inx
         cpx #STACK_SIZE
@@ -65,6 +63,13 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         ldx #0
 .nowrap:
         stx stack_idkern
+    ENDM
+
+;;; Store next note in cur_note
+;;; channel must be provided as argument (c0 or c1)
+;;; Uses A
+;;; A get cur_note
+    MAC FETCH_NEXT_NOTE
         lda #(STACK_BASE_{1}),X
         sta cur_note_{1}
     ENDM
@@ -96,44 +101,56 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         sta HM{1} ; Fine position of missile or sprite
     ENDM
 
-s_position_movable:     SUBROUTINE
-        POSITION_MOVABLE BL
+s_position_movable_P0:     SUBROUTINE
+        POSITION_MOVABLE M0
+        rts
+
+s_position_movable_P1:     SUBROUTINE
+        POSITION_MOVABLE M1
         rts
 
 ;;; Beware, this action has 2 WSYNCs
 ;;; Channel must be provided as argument (c0 or c1)
     MAC POSITION_NOTE
         lda #0
-        sta COLUPF
+        sta COLU{2}
         lda cur_note_{1}
         and #$1f ; Extract note frequency
         cmp #20                 ; If the note is far on the right, we must skip the WSYNC
                                 ; This threshold is not tuned yet (though seems to be good)
         bpl .no_wsync
         sta WSYNC
-        jsr s_position_movable
+        jsr s_position_movable_{2}
         sta WSYNC
         jmp .end
 .no_wsync:
         sta WSYNC
-        jsr s_position_movable
+        jsr s_position_movable_{2}
 .end:
         sta HMOVE
     ENDM
 
-;;; Channel must be provided as argument
-;;; Uses A and X
+;;; Draw notes of both channels
+;;; Uses A, X and Y
     MAC DRAW_NOTES
-        lda cur_note_{1}
+        lda cur_note_c0
         REPEAT 5
         lsr
         REPEND
         tax
-        lda colors_table,X ; Maybe we will need this lookup into fetch_next_note
+        lda cur_note_c1
+        REPEAT 5
+        lsr
+        REPEND
+        tay
+        lda colors_table,X
+        ldx colors_table,Y
         sta WSYNC
-        sta COLUPF
+        sta COLUP0
+        stx COLUP1
         lda #2
-        sta ENABL
+        sta ENAM0
+        sta ENAM1
 .no_disp:
     ENDM
 
@@ -145,9 +162,11 @@ fx_init:        SUBROUTINE
 
         ;; Init Ball
         lda #$ff
-        sta COLUPF              ; color
+        sta COLUP0
+        sta COLUP1
         lda #$30
-        sta CTRLPF
+        sta NUSIZ0
+        sta NUSIZ1
 	rts
 
 fx_vblank:      SUBROUTINE
@@ -160,8 +179,11 @@ fx_vblank:      SUBROUTINE
         DEC_STACK_IDX
 .end:
         stx stack_idkern ; Used to iterate on the stack each frame
+        INC_STACK_IDKERN
+        FETCH_NEXT_NOTE c0
         FETCH_NEXT_NOTE c1
-        POSITION_NOTE c1
+        POSITION_NOTE c0, P0
+        POSITION_NOTE c1, P1
 	rts
 
 
@@ -175,29 +197,32 @@ fx_kernel:      SUBROUTINE
         dey
         bpl .pre_loop
 
-        DRAW_NOTES c1
-        ldy #MAX_TIME
+        DRAW_NOTES
+        lda #MAX_TIME
+        sta tmp
 .loop:  ; 5 lines per loop
+        INC_STACK_IDKERN
+        FETCH_NEXT_NOTE c0 ; into cur_note as well as A reg
         FETCH_NEXT_NOTE c1 ; into cur_note as well as A reg
         cmp #TT_FIRST_PERC ; Percussions and instruments have values >= TT_FIRST_PERC
-        REPEAT 2
-        sta WSYNC
-        REPEND
         bcs .new_note
-        REPEAT 3
+        REPEAT 5
         sta WSYNC
         REPEND
         jmp .continue
 .new_note:
-        POSITION_NOTE c1
+        POSITION_NOTE c0, P0
+        POSITION_NOTE c1, P1
+        DRAW_NOTES c0
         DRAW_NOTES c1
 .continue:
-        dey
+        dec tmp
         bmi .end
         jmp .loop
 .end:
         lda #0
-        sta ENABL
+        sta ENAM0
+        sta ENAM1
         rts
 
 fx_overscan:    SUBROUTINE

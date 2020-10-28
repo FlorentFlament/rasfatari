@@ -13,6 +13,7 @@
 	ORG     $0080
 
 framecnt        DS.B	1
+tmp             DS.B	1
         INCLUDE "JahBah-full_variables.asm"
         INCLUDE "fx_vars.asm"
 

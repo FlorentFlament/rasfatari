@@ -8,6 +8,7 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 ;;; - Bits 7..5: instrument
 ;;; - Bits 4..0: frequency
     MAC GET_CURRENT_NOTE
+.constructPatPtr:
         ldy tt_cur_pat_index_{1}       ; get current pattern (index into tt_SequenceTable)
         lda tt_SequenceTable,y
         tay
@@ -17,8 +18,15 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         sta tt_ptr+1
         ldy tt_cur_note_index_{1}
         lda (tt_ptr),y
+        bne .noEndOfPattern
+        ; End of pattern: Advance to next pattern
+        sta tt_cur_note_index_{1}      ; a is 0
+        inc tt_cur_pat_index_{1}
+        bne .constructPatPtr            ; unconditional
+.noEndOfPattern:
     ENDM
 
+;;; stack_idx must be loaded into X and will still be in X at exit
 ;;; decreases stack_idx taking into account stack wrapping
     MAC DEC_STACK_IDX
         ldx stack_idx
@@ -31,10 +39,10 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 
 ;;; Push note of provided channel into a circular notes stacks
 ;;; Channel must be provided as argument (c0 or c1)
-;;; stack_idx must be loaded into X and will still be in X at exit
-;;; Uses Y and A registers
+;;; Uses X, Y and A registers
     MAC PUSH_NEW_NOTE
-        GET_CURRENT_NOTE {1}     ; INTO A
+        GET_CURRENT_NOTE {1}
+        ldx stack_idx
         sta #STACK_BASE_{1},X    ; Store new note on stack_idx (default)
         cmp #TT_FIRST_PERC ; Percussions and instruments have values >= TT_FIRST_PERC
         bcs .end
@@ -74,65 +82,50 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         sta cur_note_{1}
     ENDM
 
-;;; Horizontal position must be in cur_note
-;;; Argument is the object to use (P0, P1, M0, M1, BL)
-;;; current note frequency must be loaded into A
-;;; i.e cur_note & 0x1f
-    MAC POSITION_MOVABLE
-        asl
-        asl
-        SLEEP 2
+;;; Does rough positioning of note
+;;; Argument: Channel for the note (0 or 1)
+;;; A : must contain Horizontal position
+    MAC ROUGH_POSITION_LOOP
         sec
         ; Beware ! this loop must not cross a page !
-        echo "[FX position note Loop]", ({1})d, "start :", *
+        echo "[FX position note Loop] M", ({1})d, "start :", *
 .rough_loop:
         ; The rough_loop consumes 15 (5*3) pixels
         sbc #$0f              ; 2 cycles
         bcs .rough_loop ; 3 cycles
-        echo "[FX position note Loop]", ({1})d, "end :", *
-        sta RES{1}
+        echo "[FX position note Loop] M", ({1})d, "end :", *
+        sta RESM{1}
+    ENDM
 
+;;; So the rough positioning of a note
+;;; Also turns off the object used for the note
+;;; Argument: Channel for the note (0 or 1)
+;;; At exit:
+;;; A: contains the remainder usable for fine positioning
+    MAC ROUGH_POSITION_NOTE
+        sta WSYNC
+        lda #0
+        sta COLUP{1}
+        lda cur_note_c{1}
+        and #$1f ; Extract note frequency
+        asl
+        asl
+        ROUGH_POSITION_LOOP {1}
+    ENDM
+
+;;; Fine position note passed as argument
+;;; Argument: Channel for the note (0 or 1)
+;;; A: must contain the remaining value of rough positioning
+;;; At the end:
+;;; A: is destroyed
+    MAC FINE_POSITION_NOTE
         ; A register has value in [-15 .. -1]
         adc #$07 ; A in [-8 .. 6]
         eor #$ff ; A in [-7 .. 7]
     REPEAT 4
         asl
     REPEND
-        sta HM{1} ; Fine position of missile or sprite
-    ENDM
-
-s_position_movable_P0:     SUBROUTINE
-        POSITION_MOVABLE M0
-        rts
-
-s_position_movable_P1:     SUBROUTINE
-        POSITION_MOVABLE M1
-        rts
-
-;;; Beware, this action has 2 WSYNCs
-;;; Channel must be provided as argument (c0 or c1)
-    MAC POSITION_NOTE
-        lda cur_note_{1}
-        and #$1f ; Extract note frequency
-        cmp #20                 ; If the note is far on the right, we must skip the WSYNC
-                                ; This threshold is not tuned yet (though seems to be good)
-        bpl .no_wsync
-        sta WSYNC
-        jsr s_position_movable_{2}
-        sta WSYNC
-        jmp .end
-.no_wsync:
-        sta WSYNC
-        jsr s_position_movable_{2}
-.end:
-        sta HMOVE
-    ENDM
-
-    MAC CLEAR_NOTES
-        sta WSYNC
-        lda #0
-        sta COLUP0
-        sta COLUP1
+        sta HMM{1} ; Fine position of missile or sprite
     ENDM
 
 ;;; Draw notes of both channels
@@ -156,8 +149,23 @@ s_position_movable_P1:     SUBROUTINE
         lda #2
         sta ENAM0
         sta ENAM1
-.no_disp:
     ENDM
+
+;;; Display a full band of 5 pixels of notes
+;;; Uses A, X and Y
+    MAC DISPLAY_BAND
+        FETCH_NEXT_NOTE c0
+        FETCH_NEXT_NOTE c1
+        ROUGH_POSITION_NOTE 0
+        tax
+        ROUGH_POSITION_NOTE 1
+        FINE_POSITION_NOTE 1
+        txa
+        FINE_POSITION_NOTE 0
+        DRAW_NOTES
+        INC_STACK_IDKERN
+    ENDM
+
 
 ;;; Functions used in main
 fx_init:        SUBROUTINE
@@ -175,7 +183,6 @@ fx_init:        SUBROUTINE
 	rts
 
 fx_vblank:      SUBROUTINE
-        ldx stack_idx
         lda tt_timer
         cmp #TT_SPEED-1
         bne .end
@@ -183,14 +190,7 @@ fx_vblank:      SUBROUTINE
         PUSH_NEW_NOTE c1
         DEC_STACK_IDX
 .end:
-        stx stack_idkern ; Used to iterate on the stack each frame
-        INC_STACK_IDKERN
-        FETCH_NEXT_NOTE c0
-        FETCH_NEXT_NOTE c1
-        POSITION_NOTE c0, P0
-        POSITION_NOTE c1, P1
-	rts
-
+        rts
 
 fx_kernel:      SUBROUTINE
         sec
@@ -202,29 +202,16 @@ fx_kernel:      SUBROUTINE
         dey
         bpl .pre_loop
 
-        DRAW_NOTES
+        lda stack_idx
+        sta stack_idkern ; Used to iterate on the stack each frame
         lda #MAX_TIME
         sta tmp
 .loop:  ; 5 lines per loop
-        INC_STACK_IDKERN
-        FETCH_NEXT_NOTE c0 ; into cur_note as well as A reg
-        FETCH_NEXT_NOTE c1 ; into cur_note as well as A reg
-        cmp #TT_FIRST_PERC ; Percussions and instruments have values >= TT_FIRST_PERC
-        bcs .new_note
-        REPEAT 5
         sta WSYNC
-        REPEND
-        jmp .continue
-.new_note:
-        CLEAR_NOTES             ; 1 WSYNC
-        POSITION_NOTE c0, P0    ; 2 WSYNC
-        POSITION_NOTE c1, P1    ; 2 WSYNC
-        DRAW_NOTES              ; 1 WSYNC
-.continue:
+        DISPLAY_BAND
         dec tmp
-        bmi .end
-        jmp .loop
-.end:
+        bpl .loop
+
         lda #0
         sta ENAM0
         sta ENAM1
@@ -242,4 +229,4 @@ fx_overscan:    SUBROUTINE
 ;;; Bass (5): Purple - c8
 ;;; Chords (6): Red - 6a
 colors_table:
-        dc.b $0e, $3c, $38, $2c, $4a, $c8, $6a, $0e
+        dc.b $0e, $3c, $38, $2c, $4a, $c8, $6a, $8a

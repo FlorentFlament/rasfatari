@@ -144,6 +144,7 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         lda colors_table,X
         ldx colors_table,Y
         sta WSYNC
+        sta HMOVE               ; Commit notes fine tuning
         sta COLUP0
         stx COLUP1
         lda #2

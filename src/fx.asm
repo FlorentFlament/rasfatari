@@ -60,17 +60,17 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 .end:
     ENDM
 
-;;; Increments stack_idkern (possibly wrapping around stack)
+;;; Increments stack_ikern (possibly wrapping around stack)
 ;;; Uses X
-;;; At exit stack_idkern and X contain updated stack_idkern
-    MAC INC_STACK_IDKERN
-        ldx stack_idkern
+;;; At exit stack_ikern and X contain updated stack_ikern
+    MAC INC_STACK_IKERN
+        ldx stack_ikern
         inx
         cpx #STACK_SIZE
         bne .nowrap
         ldx #0
 .nowrap:
-        stx stack_idkern
+        stx stack_ikern
     ENDM
 
 ;;; Store next note in cur_note
@@ -164,7 +164,7 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         txa
         FINE_POSITION_NOTE 0
         DRAW_NOTES
-        INC_STACK_IDKERN
+        INC_STACK_IKERN
     ENDM
 
 
@@ -204,7 +204,7 @@ fx_kernel:      SUBROUTINE
         bpl .pre_loop
 
         lda stack_idx
-        sta stack_idkern ; Used to iterate on the stack each frame
+        sta stack_ikern ; Used to iterate on the stack each frame
         lda #MAX_TIME
         sta tmp
 .loop:  ; 5 lines per loop

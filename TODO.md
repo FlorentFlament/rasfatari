@@ -8,10 +8,6 @@ FXs
 
 ### Notes rain
 
-* multiple objects (sprites, ball, missiles) ? - Improved state machine / workflow
-* Naturally using 2 chans
-* mores parallel zones ?
-
 * Choosing which notes to display
 * Modular code / to variate the effects (ex notes selection, all the notes).
 

@@ -167,19 +167,21 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         sta WSYNC
         sta HMOVE               ; Commit notes fine tuning
         sta COLUP0
-        lda #2
-        sta ENAM0
 .skip_c0_note:
         FETCH_NEXT_NOTE c1      ; cur_note_c1 is in A
         cmp #$40                ; #$40 is a non-note
         bne .new_c1_note
         sta WSYNC
+        lda #2
+        sta ENAM0
         sta WSYNC
         sta WSYNC
         jmp .skip_c1_note
 
 .new_c1_note:
         sta WSYNC
+        lda #2
+        sta ENAM0
         lda #0
         sta ENAM1
         sleep 20

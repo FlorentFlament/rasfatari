@@ -211,8 +211,10 @@ fx_kernel:      SUBROUTINE
         sta WSYNC
         DISPLAY_BAND
         dec tmp
-        bpl .loop
+        bmi .end
+        jmp .loop
 
+.end:
         lda #0
         sta ENAM0
         sta ENAM1

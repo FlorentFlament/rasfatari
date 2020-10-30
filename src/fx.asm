@@ -1,5 +1,14 @@
 MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 
+;;; Swap instrument (bits 7-5) and frequency (bits 4-0)
+;;; Note must be in A and the result will be in A
+    MAC SWAP_NOTE
+        REPEAT 3
+        cmp #$80
+        rol
+        REPEND
+    ENDM
+
 ;;; Get current note being played
 ;;; the channel must be passed as a macro argument (c0 or c1)
 ;;; Y is used
@@ -42,6 +51,7 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 ;;; Uses X, Y and A registers
     MAC PUSH_NEW_NOTE
         GET_CURRENT_NOTE {1}
+        SWAP_NOTE
         ldx stack_idx
         sta #STACK_BASE_{1},X    ; Store new note on stack_idx (default)
         cmp #TT_FIRST_PERC ; Percussions and instruments have values >= TT_FIRST_PERC
@@ -107,9 +117,8 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         lda #0
         sta COLUP{1}
         lda cur_note_c{1}
-        and #$1f ; Extract note frequency
-        asl
-        asl
+        lsr
+        and #$7c ; Extract note frequency
         ROUGH_POSITION_LOOP {1}
     ENDM
 
@@ -119,7 +128,8 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 ;;; At the end:
 ;;; A: is destroyed
     MAC FINE_POSITION_NOTE
-        ; A register has value in [-15 .. -1]
+        ;; A register has value in [-15 .. -1]
+        clc
         adc #$07 ; A in [-8 .. 6]
         eor #$ff ; A in [-7 .. 7]
     REPEAT 4
@@ -132,14 +142,10 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 ;;; Uses A, X and Y
     MAC DRAW_NOTES
         lda cur_note_c0
-        REPEAT 5
-        lsr
-        REPEND
+        and #$07                ; Filter out note
         tax
         lda cur_note_c1
-        REPEAT 5
-        lsr
-        REPEND
+        and #$07                ; Filter out note
         tay
         lda colors_table,X
         ldx colors_table,Y
@@ -186,7 +192,9 @@ fx_init:        SUBROUTINE
 fx_vblank:      SUBROUTINE
         lda tt_timer
         cmp #TT_SPEED-1
-        bne .end
+        beq .new_notes
+        jmp .end
+.new_notes:
         PUSH_NEW_NOTE c0
         PUSH_NEW_NOTE c1
         DEC_STACK_IDX

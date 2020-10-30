@@ -161,6 +161,7 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 ;;; Display a full band of 5 pixels of notes
 ;;; Uses A, X and Y
     MAC DISPLAY_BAND
+        INC_STACK_IKERN
         FETCH_NEXT_NOTE c0
         FETCH_NEXT_NOTE c1
         ROUGH_POSITION_NOTE 0
@@ -170,7 +171,6 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         txa
         FINE_POSITION_NOTE 0
         DRAW_NOTES
-        INC_STACK_IKERN
     ENDM
 
 

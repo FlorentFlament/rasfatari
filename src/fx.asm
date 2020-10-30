@@ -9,6 +9,22 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         REPEND
     ENDM
 
+;;; Argument is channel (0 or 1)
+    MAC GET_NOTE_FREQUENCY
+        lda cur_note_c{1}
+        lsr
+        lsr
+        and #$7c ; Extract note frequency
+    ENDM
+
+;;; Argument is channel (0 or 1)
+    MAC GET_NOTE_COLOR
+        lda cur_note_c{1}
+        and #$07                ; Filter out note
+	tax
+        lda colors_table,X
+    ENDM
+
 ;;; Get current note being played
 ;;; the channel must be passed as a macro argument (c0 or c1)
 ;;; Y is used
@@ -54,8 +70,8 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         SWAP_NOTE
         ldx stack_idx
         sta #STACK_BASE_{1},X    ; Store new note on stack_idx (default)
-        cmp #TT_FIRST_PERC ; Percussions and instruments have values >= TT_FIRST_PERC
-        bcs .end
+        cmp #$40                 ; #$40 is a non-note
+        bne .end
 .non_note:
         ;; This is a non_note, we need to swap it with the previous note
         inx
@@ -85,9 +101,10 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 
 ;;; Store next note in cur_note
 ;;; channel must be provided as argument (c0 or c1)
-;;; Uses A
+;;; Uses A, X
 ;;; A get cur_note
     MAC FETCH_NEXT_NOTE
+        ldx stack_ikern
         lda #(STACK_BASE_{1}),X
         sta cur_note_{1}
     ENDM
@@ -107,21 +124,6 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         sta RESM{1}
     ENDM
 
-;;; So the rough positioning of a note
-;;; Also turns off the object used for the note
-;;; Argument: Channel for the note (0 or 1)
-;;; At exit:
-;;; A: contains the remainder usable for fine positioning
-    MAC ROUGH_POSITION_NOTE
-        sta WSYNC
-        lda #0
-        sta COLUP{1}
-        lda cur_note_c{1}
-        lsr
-        and #$7c ; Extract note frequency
-        ROUGH_POSITION_LOOP {1}
-    ENDM
-
 ;;; Fine position note passed as argument
 ;;; Argument: Channel for the note (0 or 1)
 ;;; A: must contain the remaining value of rough positioning
@@ -138,39 +140,64 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         sta HMM{1} ; Fine position of missile or sprite
     ENDM
 
-;;; Draw notes of both channels
-;;; Uses A, X and Y
-    MAC DRAW_NOTES
-        lda cur_note_c0
-        and #$07                ; Filter out note
-        tax
-        lda cur_note_c1
-        and #$07                ; Filter out note
-        tay
-        lda colors_table,X
-        ldx colors_table,Y
-        sta WSYNC
-        sta HMOVE               ; Commit notes fine tuning
-        sta COLUP0
-        stx COLUP1
-        lda #2
-        sta ENAM0
-        sta ENAM1
-    ENDM
-
 ;;; Display a full band of 5 pixels of notes
 ;;; Uses A, X and Y
     MAC DISPLAY_BAND
         INC_STACK_IKERN
-        FETCH_NEXT_NOTE c0
-        FETCH_NEXT_NOTE c1
-        ROUGH_POSITION_NOTE 0
-        tax
-        ROUGH_POSITION_NOTE 1
-        FINE_POSITION_NOTE 1
-        txa
+
+        FETCH_NEXT_NOTE c0      ; cur_note_c0 is in A
+        cmp #$40                ; #$40 is a non-note
+        bne .new_c0_note
+        sta WSYNC
+        sta WSYNC
+        jmp .skip_c0_note
+
+.new_c0_note:
+        sta WSYNC
+        lda #0                  ; turn off note chan0
+        sta ENAM0
+        sleep 5
+        GET_NOTE_FREQUENCY 0
+        ROUGH_POSITION_LOOP 0
         FINE_POSITION_NOTE 0
-        DRAW_NOTES
+        lda #0
+        sta HMM1                ; Don't move missile 1
+        GET_NOTE_COLOR 0
+
+        sta WSYNC
+        sta HMOVE               ; Commit notes fine tuning
+        sta COLUP0
+        lda #2
+        sta ENAM0
+.skip_c0_note:
+        FETCH_NEXT_NOTE c1      ; cur_note_c1 is in A
+        cmp #$40                ; #$40 is a non-note
+        bne .new_c1_note
+        sta WSYNC
+        sta WSYNC
+        sta WSYNC
+        jmp .skip_c1_note
+
+.new_c1_note:
+        sta WSYNC
+        lda #0
+        sta ENAM1
+        sleep 20
+        GET_NOTE_FREQUENCY 1
+        ROUGH_POSITION_LOOP 1
+
+        sta WSYNC
+        FINE_POSITION_NOTE 1
+        lda #0
+        sta HMM0                ; Don't move missile 0
+        GET_NOTE_COLOR 1
+
+        sta WSYNC
+        sta HMOVE               ; Commit notes fine tuning
+        sta COLUP1
+        lda #2
+        sta ENAM1
+.skip_c1_note:
     ENDM
 
 
@@ -216,7 +243,6 @@ fx_kernel:      SUBROUTINE
         lda #MAX_TIME
         sta tmp
 .loop:  ; 5 lines per loop
-        sta WSYNC
         DISPLAY_BAND
         dec tmp
         bmi .end

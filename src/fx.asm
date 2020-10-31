@@ -38,6 +38,44 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         REPEND
     ENDM
 
+;;; Argument is the channel to consider
+;;; Y: index of note to test
+;;; At exit Z is set if this is a new note
+;;; Modifies A
+    MAC IS_NEW_NOTE
+        lda tt_envelope_index_c{1}
+        cmp tt_InsADIndexes-1,Y
+    ENDM
+
+;;; Note must be in Y
+;;; Uses A and Y
+;;; At the end, the note volume is in A
+    MAC GET_NOTE_VOLUME
+        lda tt_envelope_index_c{1}
+        cmp tt_InsReleaseIndexes-1,y    ; -1 because instruments start with #1
+        bne .noEndOfSustain
+        ; End of sustain: Go back to start of sustain
+        lda tt_InsSustainIndexes-1,y    ; -1 because instruments start with #1
+.noEndOfSustain:
+        tay
+        ; Set volume from envelope
+        lda tt_InsFreqVolTable,y
+        and #$0f                ; Extract volume
+    ENDM
+
+    MAC GET_PERC_VOLUME
+        lda tt_envelope_index_c{1}
+        cmp tt_InsReleaseIndexes-1,y    ; -1 because instruments start with #1
+        bne .noEndOfSustain
+        ; End of sustain: Go back to start of sustain
+        lda tt_InsSustainIndexes-1,y    ; -1 because instruments start with #1
+.noEndOfSustain:
+        tay
+        ; Set volume from envelope
+        lda tt_PercCtrlVolTable,y
+        and #$0f                ; Extract volume
+    ENDM
+
 ;;; Argument is channel (0 or 1)
     MAC GET_NOTE_FREQUENCY
         lda cur_note_c{1}
@@ -69,24 +107,45 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 ;;; Channel must be provided as argument (0 or 1)
 ;;; Uses X, Y and A registers
     MAC PUSH_NEW_NOTE
-        GET_CURRENT_NOTE {1}    ; into A
-        SWAP_NOTE               ; still in A
+        GET_CURRENT_NOTE {1}
+        cmp #TT_FIRST_PERC       ; below that, there's only HOLD (or unused PAUSE)
+        bcc .no_new_note
+.new_note:
+        SWAP_NOTE
+        jmp .end
+
+.no_new_note:
+        ;; Silence or Sustain ?
+        lda tt_cur_ins_c{1}     ; Load active instrument
+        REPEAT 5                ; Extract instrument
+        lsr
+        REPEND
+        tay
+        bne .instrument
+        GET_PERC_VOLUME {1}
+        beq .silence
+        bne .sustain            ; unconditional
+.instrument:
+        GET_NOTE_VOLUME {1}     ; Note is still in Y
+        bne .sustain
+.silence:
+        lda #$00
+        jmp .end
+
+.sustain:
+        ;; We need to swap previous note with current #$40
         ldx stack_idx
-        sta #STACK_BASE_c{1},X  ; Store new note on stack_idx (default)
-        cmp #$40                ; #$40 means note sustained
-        bne .end
-.non_note:
-        ;; Maintaining a note, we need to swap it with the previous note
         inx
         cpx #STACK_SIZE
         bne .no_wrap
         ldx #0
 .no_wrap:
-        ldy #STACK_BASE_c{1},X
-        sta #STACK_BASE_c{1},X
-        ldx stack_idx
+        lda #STACK_BASE_c{1},X
+        ldy #$40                ; Replace previous note with #$40
         sty #STACK_BASE_c{1},X
 .end:
+        ldx stack_idx
+        sta #STACK_BASE_c{1},X
     ENDM
 
 ;;; Increments stack_ikern (possibly wrapping around stack)
@@ -170,24 +229,24 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         sta WSYNC
         sta HMOVE               ; Commit notes fine tuning
         sta COLUP0
+        lda cur_note_c0
+        beq .skip_c0_note
+        lda #2
+        sta ENAM0
 .skip_c0_note:
         FETCH_NEXT_NOTE 1      ; cur_note_c1 is in A
         cmp #$40                ; #$40 is a non-note
         bne .new_c1_note
         sta WSYNC
-        lda #2
-        sta ENAM0
         sta WSYNC
         sta WSYNC
         jmp .skip_c1_note
 
 .new_c1_note:
         sta WSYNC
-        lda #2
-        sta ENAM0
         lda #0
         sta ENAM1
-        sleep 20
+        sleep 15
         GET_NOTE_FREQUENCY 1
         ROUGH_POSITION_LOOP 1
 
@@ -200,6 +259,8 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         sta WSYNC
         sta HMOVE               ; Commit notes fine tuning
         sta COLUP1
+        lda cur_note_c1
+        beq .skip_c1_note
         lda #2
         sta ENAM1
 .skip_c1_note:
@@ -223,7 +284,6 @@ fx_init:        SUBROUTINE
 
 fx_vblank:      SUBROUTINE
         lda tt_timer
-        cmp #TT_SPEED-1
         beq .new_notes
         jmp .end
 .new_notes:

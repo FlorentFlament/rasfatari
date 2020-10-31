@@ -33,8 +33,8 @@ main_loop:
 	; 34 VBlank lines (76 cycles/line)
 	lda #39			; (/ (* 34.0 76) 64) = 40.375
 	sta TIM64T
-        INCLUDE "JahBah_player.asm"
 	jsr fx_vblank
+        INCLUDE "JahBah_player.asm"
 	jsr wait_timint
 
 	; 248 Kernel lines

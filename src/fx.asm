@@ -1,7 +1,36 @@
 MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 
+;;; Get current note being played
+;;; the channel must be passed as a macro argument (0 or 1)
+;;; Y is used
+;;; Current note is returned in A
+;;; - Bits 7..5: instrument
+;;; - Bits 4..0: frequency
+;;; Uses A and Y
+    MAC GET_CURRENT_NOTE
+.constructPatPtr:
+        ldy tt_cur_pat_index_c{1}       ; get current pattern (index into tt_SequenceTable)
+        lda tt_SequenceTable,y
+        tay
+        lda tt_PatternPtrLo,y
+        sta tt_ptr
+        lda tt_PatternPtrHi,y
+        sta tt_ptr+1
+        ldy tt_cur_note_index_c{1}
+        lda (tt_ptr),y
+        bne .noEndOfPattern
+        ; End of pattern: Advance to next pattern
+        sta tt_cur_note_index_c{1}      ; a is 0
+        inc tt_cur_pat_index_c{1}
+        bne .constructPatPtr            ; unconditional
+.noEndOfPattern:
+    ENDM
+
 ;;; Swap instrument (bits 7-5) and frequency (bits 4-0)
 ;;; Note must be in A and the result will be in A
+;;; At the end:
+;;; Frequency occupies bits 7-3
+;;; Instrument occupies bits 2-0
     MAC SWAP_NOTE
         REPEAT 3
         cmp #$80
@@ -25,32 +54,6 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         lda colors_table,X
     ENDM
 
-;;; Get current note being played
-;;; the channel must be passed as a macro argument (c0 or c1)
-;;; Y is used
-;;; Current note is returned in A
-;;;
-;;; - Bits 7..5: instrument
-;;; - Bits 4..0: frequency
-    MAC GET_CURRENT_NOTE
-.constructPatPtr:
-        ldy tt_cur_pat_index_{1}       ; get current pattern (index into tt_SequenceTable)
-        lda tt_SequenceTable,y
-        tay
-        lda tt_PatternPtrLo,y
-        sta tt_ptr
-        lda tt_PatternPtrHi,y
-        sta tt_ptr+1
-        ldy tt_cur_note_index_{1}
-        lda (tt_ptr),y
-        bne .noEndOfPattern
-        ; End of pattern: Advance to next pattern
-        sta tt_cur_note_index_{1}      ; a is 0
-        inc tt_cur_pat_index_{1}
-        bne .constructPatPtr            ; unconditional
-.noEndOfPattern:
-    ENDM
-
 ;;; stack_idx must be loaded into X and will still be in X at exit
 ;;; decreases stack_idx taking into account stack wrapping
     MAC DEC_STACK_IDX
@@ -63,26 +66,26 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
     ENDM
 
 ;;; Push note of provided channel into a circular notes stacks
-;;; Channel must be provided as argument (c0 or c1)
+;;; Channel must be provided as argument (0 or 1)
 ;;; Uses X, Y and A registers
     MAC PUSH_NEW_NOTE
         GET_CURRENT_NOTE {1}
         SWAP_NOTE
         ldx stack_idx
-        sta #STACK_BASE_{1},X    ; Store new note on stack_idx (default)
-        cmp #$40                 ; #$40 is a non-note
+        sta #STACK_BASE_c{1},X   ; Store new note on stack_idx (default)
+        cmp #$40                ; #$40 means that we maintain the current note
         bne .end
 .non_note:
-        ;; This is a non_note, we need to swap it with the previous note
+        ;; Maintaining a note, we need to swap it with the previous note
         inx
         cpx #STACK_SIZE
         bne .no_wrap
         ldx #0
 .no_wrap:
-        ldy #STACK_BASE_{1},X
-        sta #STACK_BASE_{1},X
+        ldy #STACK_BASE_c{1},X
+        sta #STACK_BASE_c{1},X
         ldx stack_idx
-        sty #STACK_BASE_{1},X
+        sty #STACK_BASE_c{1},X
 .end:
     ENDM
 
@@ -100,13 +103,13 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
     ENDM
 
 ;;; Store next note in cur_note
-;;; channel must be provided as argument (c0 or c1)
+;;; channel must be provided as argument (0 or 1)
 ;;; Uses A, X
 ;;; A get cur_note
     MAC FETCH_NEXT_NOTE
         ldx stack_ikern
-        lda #(STACK_BASE_{1}),X
-        sta cur_note_{1}
+        lda #(STACK_BASE_c{1}),X
+        sta cur_note_c{1}
     ENDM
 
 ;;; Does rough positioning of note
@@ -145,7 +148,7 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
     MAC DISPLAY_BAND
         INC_STACK_IKERN
 
-        FETCH_NEXT_NOTE c0      ; cur_note_c0 is in A
+        FETCH_NEXT_NOTE 0      ; cur_note_c0 is in A
         cmp #$40                ; #$40 is a non-note
         bne .new_c0_note
         sta WSYNC
@@ -168,7 +171,7 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         sta HMOVE               ; Commit notes fine tuning
         sta COLUP0
 .skip_c0_note:
-        FETCH_NEXT_NOTE c1      ; cur_note_c1 is in A
+        FETCH_NEXT_NOTE 1      ; cur_note_c1 is in A
         cmp #$40                ; #$40 is a non-note
         bne .new_c1_note
         sta WSYNC
@@ -224,8 +227,8 @@ fx_vblank:      SUBROUTINE
         beq .new_notes
         jmp .end
 .new_notes:
-        PUSH_NEW_NOTE c0
-        PUSH_NEW_NOTE c1
+        PUSH_NEW_NOTE 0
+        PUSH_NEW_NOTE 1
         DEC_STACK_IDX
 .end:
         rts

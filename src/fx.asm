@@ -47,30 +47,27 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         cmp tt_InsADIndexes-1,Y
     ENDM
 
+    MAC GET_VOLUME_COMMON
+        lda tt_envelope_index_c{1}
+        cmp tt_InsReleaseIndexes-1,y    ; -1 because instruments start with #1
+        bne .noEndOfSustain
+        ; End of sustain: Go back to start of sustain
+        lda tt_InsSustainIndexes-1,y    ; -1 because instruments start with #1
+.noEndOfSustain:
+        tay
+    ENDM
+
 ;;; Note must be in Y
 ;;; Uses A and Y
 ;;; At the end, the note volume is in A
     MAC GET_NOTE_VOLUME
-        lda tt_envelope_index_c{1}
-        cmp tt_InsReleaseIndexes-1,y    ; -1 because instruments start with #1
-        bne .noEndOfSustain
-        ; End of sustain: Go back to start of sustain
-        lda tt_InsSustainIndexes-1,y    ; -1 because instruments start with #1
-.noEndOfSustain:
-        tay
+        GET_VOLUME_COMMON {1}
         ; Set volume from envelope
         lda tt_InsFreqVolTable,y
         and #$0f                ; Extract volume
     ENDM
-
     MAC GET_PERC_VOLUME
-        lda tt_envelope_index_c{1}
-        cmp tt_InsReleaseIndexes-1,y    ; -1 because instruments start with #1
-        bne .noEndOfSustain
-        ; End of sustain: Go back to start of sustain
-        lda tt_InsSustainIndexes-1,y    ; -1 because instruments start with #1
-.noEndOfSustain:
-        tay
+        GET_VOLUME_COMMON {1}
         ; Set volume from envelope
         lda tt_PercCtrlVolTable,y
         and #$0f                ; Extract volume

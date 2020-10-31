@@ -69,11 +69,11 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 ;;; Channel must be provided as argument (0 or 1)
 ;;; Uses X, Y and A registers
     MAC PUSH_NEW_NOTE
-        GET_CURRENT_NOTE {1}
-        SWAP_NOTE
+        GET_CURRENT_NOTE {1}    ; into A
+        SWAP_NOTE               ; still in A
         ldx stack_idx
-        sta #STACK_BASE_c{1},X   ; Store new note on stack_idx (default)
-        cmp #$40                ; #$40 means that we maintain the current note
+        sta #STACK_BASE_c{1},X  ; Store new note on stack_idx (default)
+        cmp #$40                ; #$40 means note sustained
         bne .end
 .non_note:
         ;; Maintaining a note, we need to swap it with the previous note

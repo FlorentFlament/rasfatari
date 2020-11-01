@@ -7,26 +7,32 @@ DARK_GREY = $06
 
 ;;; Get current note being played
 ;;; the channel must be passed as a macro argument (0 or 1)
-;;; Y is used
 ;;; Current note is returned in A
 ;;; - Bits 7..5: instrument
 ;;; - Bits 4..0: frequency
-;;; Uses A and Y
+;;; Uses A, X and Y and tmp
     MAC GET_CURRENT_NOTE
+	;; Don't touch tt_cur_note_index_c{1} and tt_cur_pat_index_c{1}
+        ;; Use copies instead
+        ldx tt_cur_note_index_c{1}      ; get current note into pattern
+        lda tt_cur_pat_index_c{1}       ; get current pattern (index into tt_SequenceTable)
+        sta tmp
 .constructPatPtr:
-        ldy tt_cur_pat_index_c{1}       ; get current pattern (index into tt_SequenceTable)
+        ldy tmp
         lda tt_SequenceTable,y
+        and #$7f                ; If we arrive at the end of tune, we loop
         tay
         lda tt_PatternPtrLo,y
         sta tt_ptr
         lda tt_PatternPtrHi,y
         sta tt_ptr+1
-        ldy tt_cur_note_index_c{1}
+        txa
+        tay
         lda (tt_ptr),y
         bne .noEndOfPattern
         ; End of pattern: Advance to next pattern
-        sta tt_cur_note_index_c{1}      ; a is 0
-        inc tt_cur_pat_index_c{1}
+        tax                             ; A is 0
+        inc tmp
         bne .constructPatPtr            ; unconditional
 .noEndOfPattern:
     ENDM

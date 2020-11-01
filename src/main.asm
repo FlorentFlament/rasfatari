@@ -14,7 +14,7 @@
 
 framecnt        DS.B	1
 tmp             DS.B	1
-        INCLUDE "JahBah-full_variables.asm"
+        INCLUDE "JahBah-PG2_variables.asm"
         INCLUDE "fx_vars.asm"
 
 ;;;-----------------------------------------------------------------------------
@@ -24,7 +24,7 @@ tmp             DS.B	1
 	ORG $F000
 
 init:   CLEAN_START		; Initializes Registers & Memory
-        INCLUDE "JahBah-full_init.asm"
+        INCLUDE "JahBah-PG2_init.asm"
 	jsr     fx_init
 
 main_loop:
@@ -60,7 +60,7 @@ wait_timint:
 	beq wait_timint
 	rts
 
-        INCLUDE "JahBah-full_trackdata.asm"
+        INCLUDE "JahBah-PG2_trackdata.asm"
 	INCLUDE "fx.asm"
         echo "Used ROM: ", *
 

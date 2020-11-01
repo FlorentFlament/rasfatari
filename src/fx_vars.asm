@@ -1,4 +1,8 @@
-STACK_SIZE      = 48
+;;; 1 note per 5 lines band (per channel)
+;;; 240 lines -> 48 notes
+;;; -1 note for space for smooth scrolling
+;;; -2 notes for rasta bands
+STACK_SIZE = 45
 
 stack_idx       DS.B    1       ; Stack index for pushing notes
 stack_ikern     DS.B    1       ; Kernel stack index for display

@@ -1,4 +1,9 @@
-MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
+;;; Colors
+GREEN = $56
+YELLOW = $2a
+RED = $66
+LIGHT_GREY = $0c
+DARK_GREY = $06
 
 ;;; Get current note being played
 ;;; the channel must be passed as a macro argument (0 or 1)
@@ -85,7 +90,7 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
     MAC GET_NOTE_COLOR
         lda cur_note_c{1}
         and #$07                ; Filter out note
-	tax
+        tax
         lda colors_table,X
     ENDM
 
@@ -243,7 +248,7 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
         sta WSYNC
         lda #0
         sta ENAM1
-        sleep 15
+        sleep 18
         GET_NOTE_FREQUENCY 1
         ROUGH_POSITION_LOOP 1
 
@@ -263,6 +268,19 @@ MAX_TIME = 47 ; 240 lines, 5 lines per period -> 48 periods
 .skip_c1_note:
     ENDM
 
+    MAC RASTA_BAND
+        lda #GREEN
+        sta COLUBK
+        sta WSYNC
+        sta WSYNC
+        lda #YELLOW
+        sta COLUBK
+        sta WSYNC
+        sta WSYNC
+        lda #RED
+        sta COLUBK
+        sta WSYNC
+    ENDM
 
 ;;; Functions used in main
 fx_init:        SUBROUTINE
@@ -277,7 +295,7 @@ fx_init:        SUBROUTINE
         lda #$30
         sta NUSIZ0
         sta NUSIZ1
-	rts
+        rts
 
 fx_vblank:      SUBROUTINE
         lda tt_timer
@@ -291,18 +309,23 @@ fx_vblank:      SUBROUTINE
         rts
 
 fx_kernel:      SUBROUTINE
+        sta WSYNC
+        RASTA_BAND
+
         sec
         lda #4
         sbc tt_timer
         tay
 .pre_loop:
         sta WSYNC
+        lda #$00
+        sta COLUBK
         dey
         bpl .pre_loop
 
         lda stack_idx
         sta stack_ikern ; Used to iterate on the stack each frame
-        lda #MAX_TIME
+        lda #STACK_SIZE-1
         sta tmp
 .loop:  ; 5 lines per loop
         DISPLAY_BAND
@@ -311,21 +334,30 @@ fx_kernel:      SUBROUTINE
         jmp .loop
 
 .end:
+
+        ldy tt_timer
+.post_loop:
+	sta WSYNC
         lda #0
         sta ENAM0
         sta ENAM1
+        dey
+        bpl .post_loop
+
+	RASTA_BAND
+	sta WSYNC
+	lda #$00
+	sta COLUBK
         rts
 
 fx_overscan:    SUBROUTINE
 	rts
 
-;;; 8 possible colors
-;;; Drum (0): White - 0e
-;;; LeadBeep (1): Light Green - 3c
-;;; leadBeep (2): Dark Green - 38
-;;; SoftBeep (3): Light Yellow - 2c
-;;; SoftBeep (4): Orange - 4a
-;;; Bass (5): Purple - c8
-;;; Chords (6): Red - 6a
 colors_table:
-        dc.b $0c, $56, $56, $2a, $2a, $06, $66, $8a
+        dc.b LIGHT_GREY		; Drum
+	dc.b GREEN		; LeadBeep - High
+	dc.b GREEN		; LeadBeep - Low
+	dc.b YELLOW		; SoftBeep - High
+	dc.b YELLOW		; SoftBeep - Low
+	dc.b DARK_GREY		; Bass
+	dc.b RED		; Chords

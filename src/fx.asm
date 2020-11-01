@@ -226,10 +226,10 @@ DARK_GREY = $06
         FINE_POSITION_NOTE 0
         lda #0
         sta HMM1                ; Don't move missile 1
-        GET_NOTE_COLOR 0
 
         sta WSYNC
         sta HMOVE               ; Commit notes fine tuning
+        GET_NOTE_COLOR 0
         sta COLUP0
         lda cur_note_c0
         beq .skip_c0_note
@@ -248,7 +248,7 @@ DARK_GREY = $06
         sta WSYNC
         lda #0
         sta ENAM1
-        sleep 18
+        sleep 19
         GET_NOTE_FREQUENCY 1
         ROUGH_POSITION_LOOP 1
 

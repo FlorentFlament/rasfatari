@@ -328,4 +328,4 @@ fx_overscan:    SUBROUTINE
 ;;; Bass (5): Purple - c8
 ;;; Chords (6): Red - 6a
 colors_table:
-        dc.b $0e, $3c, $38, $2c, $4a, $c8, $6a, $8a
+        dc.b $0c, $56, $56, $2a, $2a, $06, $66, $8a

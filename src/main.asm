@@ -62,7 +62,7 @@ wait_timint:
 
         INCLUDE "JahBah-full_trackdata.asm"
 	INCLUDE "fx.asm"
-
+        echo "Used ROM: ", *
 
 ;;;-----------------------------------------------------------------------------
 ;;; Reset Vector

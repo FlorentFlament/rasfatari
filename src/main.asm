@@ -14,18 +14,24 @@
 
 framecnt        DS.B	1
 tmp             DS.B	1
+ptr		DS.B	2
         INCLUDE "JahBah-PG2_variables.asm"
         INCLUDE "fx_vars.asm"
+	INCLUDE "text_vars.asm"
+        echo "Used RAM: ", *
 
 ;;;-----------------------------------------------------------------------------
 ;;; Code segment
 
 	SEG code
 	ORG $F000
+	;; Loading aligned data
+	INCLUDE "text_font.asm"
 
 init:   CLEAN_START		; Initializes Registers & Memory
         INCLUDE "JahBah-PG2_init.asm"
 	jsr     fx_init
+	jsr	text_init
 
 main_loop:
 	VERTICAL_SYNC		; 4 scanlines Vertical Sync signal
@@ -41,6 +47,7 @@ main_loop:
 	lda #19			; (/ (* 248.0 76) 1024) = 18.40
 	sta T1024T
 	jsr fx_kernel		; scanline 33 - cycle 23
+	jsr text_kernel
 	jsr wait_timint		; scanline 289 - cycle 30
 
 	; 26 Overscan lines
@@ -62,6 +69,7 @@ wait_timint:
 
         INCLUDE "JahBah-PG2_trackdata.asm"
 	INCLUDE "fx.asm"
+	INCLUDE "text.asm"
         echo "Used ROM: ", *
 
 ;;;-----------------------------------------------------------------------------

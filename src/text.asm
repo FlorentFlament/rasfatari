@@ -1,3 +1,74 @@
+; Text to display is pointed to by ptr
+	MAC m_fx_text_load
+	ldy #11 ; Load the 11 characters to be displayed
+.next:
+	; Compute offset in the txt_buf buffer and move to X
+	tya
+	asl
+	tax
+
+	; Compute pointer towards LSB towards font
+	lda (ptr),Y
+	asl
+	asl
+	asl
+	sta txt_buf,X
+	; MSB
+	lda #>text_font
+	sta txt_buf+1,X
+
+	dey
+	bpl .next
+	ENDM
+
+; Setup text to be displayed
+; X must contain the text index to fetch
+; Uses tmp, ptr
+; txt_buf will be filled with the appropriate pointers
+	MAC m_text_setup
+	; Multiply by 12 fx_text_idx
+	; *4 first
+	lda #0
+	sta tmp ; MSB
+	txa ; LSB
+	REPEAT 2
+	asl
+	rol tmp
+	REPEND
+	sta ptr
+	lda tmp
+	sta ptr + 1
+
+	; *8 then
+	lda ptr ; LSB
+	asl
+	rol tmp ; MSB
+
+	; *12 - Add ptr to A and tmp
+	clc
+	adc ptr
+	sta ptr
+	lda tmp
+	adc ptr + 1
+	sta ptr + 1
+
+	; + text
+	; No possible carry by multiplying x in [0..255] by 12
+	lda ptr
+	adc #<text
+	sta ptr
+	lda ptr + 1
+	adc #>text
+	sta ptr + 1
+	; Then load the text from ptr
+	m_fx_text_load
+	ENDM
+
+text_init:	SUBROUTINE
+	ldx #0
+	m_text_setup
+	rts
+
 ; FX Text Main Kernel part
 ; Note that this doesn't need to be aligned
 	MAC m_fx_text_kernel_main
@@ -11,9 +82,7 @@
 	; This happens when writing HMOVE at the end of the scanline.
 	; L54: Display 2*8 lines
 	; This uses Y reg
-	ldy fx_text_offset
-	cpy #8
-	beq .end_txt
+	ldy #0
 .txt_ln:
 	sta WSYNC		; 3  78
 	sta HMOVE		; 3   3
@@ -64,17 +133,15 @@
 	tya		; 2  61
 	cmp #8		; 2  63
 	bne .txt_ln	; 4(2+2) 67
-.end_txt:
 	ENDM
 
-	
 ; FX Text Kernel
 ; This will be used twice (2 different kernels)
-fx_text_kernel SUBROUTINE
+text_kernel SUBROUTINE
 	lda #$06 ; 3 copies small (Number & Size)
 	sta NUSIZ0
 	sta NUSIZ1
-	lda fx_text_color
+	lda #$ff		; Color white for now
 	sta COLUP0
 	sta COLUP1
 
@@ -86,16 +153,6 @@ fx_text_kernel SUBROUTINE
 	lda #$0
 	sta GRP0
 	sta GRP1
-
-	; Skip lines to keep the layout if we have an offset
-	ldy fx_text_offset
-.skip_loop:
-	dey
-	bmi .end_skip
-	sta WSYNC
-	sta WSYNC
-	jmp .skip_loop
-.end_skip:
 	rts
 
 ; Position the sprites
@@ -129,3 +186,6 @@ FX_TEXT_POS equ *
 .dont_hmp	dex
 	bpl .dont_hmp
 	rts
+
+text:
+	dc.b "   FLUSH    "

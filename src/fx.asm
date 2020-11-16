@@ -148,12 +148,12 @@ DARK_GREY = $06
         bne .no_wrap
         ldx #0
 .no_wrap:
-        lda #STACK_BASE_c{1},X
+        lda stack_c{1},X
         ldy #$40                ; Replace previous note with #$40
-        sty #STACK_BASE_c{1},X
+        sty stack_c{1},X
 .end:
         ldx stack_idx
-        sta #STACK_BASE_c{1},X
+        sta stack_c{1},X
     ENDM
 
 ;;; Increments stack_ikern (possibly wrapping around stack)
@@ -175,7 +175,7 @@ DARK_GREY = $06
 ;;; A get cur_note
     MAC FETCH_NEXT_NOTE
         ldx stack_ikern
-        lda #(STACK_BASE_c{1}),X
+        lda stack_c{1},X
         sta cur_note_c{1}
     ENDM
 
@@ -293,17 +293,14 @@ fx_init:        SUBROUTINE
         ;; Init stack
         lda #(STACK_SIZE - 1)
         sta stack_idx
-
-        ;; Init Ball
-        lda #$ff
-        sta COLUP0
-        sta COLUP1
-        lda #$30
-        sta NUSIZ0
-        sta NUSIZ1
         rts
 
 fx_vblank:      SUBROUTINE
+        ;; Setup missiles
+        lda #$30
+        sta NUSIZ0
+        sta NUSIZ1
+
         lda tt_timer
         beq .new_notes
         jmp .end

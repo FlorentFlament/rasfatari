@@ -18,7 +18,7 @@ ptr		DS.B	2
         INCLUDE "JahBah-PG2_variables.asm"
         INCLUDE "fx_vars.asm"
 	INCLUDE "text_vars.asm"
-        echo "Used RAM: ", *
+        echo "Used RAM:", (*)d, "bytes"
 
 ;;;-----------------------------------------------------------------------------
 ;;; Code segment
@@ -70,7 +70,7 @@ wait_timint:
         INCLUDE "JahBah-PG2_trackdata.asm"
 	INCLUDE "fx.asm"
 	INCLUDE "text.asm"
-        echo "Used ROM: ", *
+        echo "Used ROM:", (* - $F000)d, "bytes"
 
 ;;;-----------------------------------------------------------------------------
 ;;; Reset Vector

@@ -82,13 +82,15 @@ text_init:	SUBROUTINE
 	; This happens when writing HMOVE at the end of the scanline.
 	; L54: Display 2*8 lines
 	; This uses Y reg
+	lda text_color		; 1st color line on index 0 cf doc below
+	sta COLUP0
+	sta COLUP1
 	ldy #7
-
 TEXT_LOOP_ALIGNED equ *
-	ALIGN 128,$ea		; loop size is
+	ALIGN 128,$ea		; loop size is 83 bytes - align with nops
 	echo "[Text loop] Align loss:", (* - TEXT_LOOP_ALIGNED)d, "bytes"
-	sta WSYNC		; 3  78
 TEXT_LOOP_START equ *
+	sta WSYNC
 .txt_ln:			; 76 machine cycles per line
 	sta HMOVE		; 3   3
 	lda (txt_buf+2),Y	; 5   8
@@ -197,10 +199,16 @@ FX_TEXT_POS equ *
 	bpl .dont_hmp
 	rts
 
-	ALIGN 16
+	ALIGN 8
+;;; The flag is shifted to use the index of line n-1
+;;; And the first line has index 0 instead of 7
+;;; So here are the index of the colors for lines 0 to 7:
+;;; 0, 7, 6, 5, 4, 3, 2, 1
 text_color:
-	dc.b $fc, $dc, $bc, $9c, $7c, $5c, $3c, $1c
-	dc.b $fc, $dc, $bc, $9c, $7c, $5c, $3c, $1c
+	dc.b GREEN
+	dc.b RED, RED, RED
+	dc.b YELLOW, YELLOW
+	dc.b GREEN, GREEN
 
 text:
 	dc.b "   FLUSH    "

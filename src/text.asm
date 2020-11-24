@@ -82,9 +82,14 @@ text_init:	SUBROUTINE
 	; This happens when writing HMOVE at the end of the scanline.
 	; L54: Display 2*8 lines
 	; This uses Y reg
-	ldy #0
-.txt_ln:
+	ldy #7
+
+TEXT_LOOP_ALIGNED equ *
+	ALIGN 128,$ea		; loop size is
+	echo "[Text loop] Align loss:", (* - TEXT_LOOP_ALIGNED)d, "bytes"
 	sta WSYNC		; 3  78
+TEXT_LOOP_START equ *
+.txt_ln:			; 76 machine cycles per line
 	sta HMOVE		; 3   3
 	lda (txt_buf+2),Y	; 5   8
 	sta GRP0		; 3  11
@@ -128,11 +133,16 @@ text_init:	SUBROUTINE
 	lda (txt_buf+16),Y	; 5  51
 	sta GRP0		; 3  54
 	stx GRP1		; 3  57
+	;; Updating color
+	lda text_color,Y	; 4  61
+	sta COLUP0		; 3  64
+	sta COLUP1		; 3  67
 	;; looping logic
-	iny		; 2  59
-	tya		; 2  61
-	cmp #8		; 2  63
-	bne .txt_ln	; 4(2+2) 67
+	dey			; 2 69
+	nop			; 2 71
+	nop			; 2 73
+	bpl .txt_ln		; 3(2+1) 76
+	echo "[Text loop] length:", (* - TEXT_LOOP_START)d, "bytes"
 	ENDM
 
 ; FX Text Kernel
@@ -186,6 +196,11 @@ FX_TEXT_POS equ *
 .dont_hmp	dex
 	bpl .dont_hmp
 	rts
+
+	ALIGN 16
+text_color:
+	dc.b $fc, $dc, $bc, $9c, $7c, $5c, $3c, $1c
+	dc.b $fc, $dc, $bc, $9c, $7c, $5c, $3c, $1c
 
 text:
 	dc.b "   FLUSH    "

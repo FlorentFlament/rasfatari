@@ -1,10 +1,3 @@
-;;; Colors
-GREEN = $56
-YELLOW = $2a
-RED = $66
-LIGHT_GREY = $0c
-DARK_GREY = $06
-
 ;;; Get current note being played
 ;;; the channel must be passed as a macro argument (0 or 1)
 ;;; Current note is returned in A

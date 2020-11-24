@@ -3,8 +3,8 @@
 
 	PROCESSOR 6502
 	INCLUDE "vcs.h"		; Provides RIOT & TIA memory map
-	INCLUDE "macro.h"		; This file includes some helper macros
-
+	INCLUDE "macro.h"	; This file includes some helper macros
+	INCLUDE "colors.h"
 
 ;;;-----------------------------------------------------------------------------
 ;;; RAM segment

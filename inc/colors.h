@@ -1,0 +1,6 @@
+;;; Colors
+GREEN = $56
+YELLOW = $2a
+RED = $66
+LIGHT_GREY = $0c
+DARK_GREY = $06

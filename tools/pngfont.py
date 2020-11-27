@@ -8,7 +8,7 @@ from imglib import *
 
 CHARACTERS = ("a","b","c","d","e","f","g","h","i","j","k","l","m",
               "n","o","p","q","r","s","t","u","v","w","x","y","z",
-              "point","intero","excla","bonus1","bonus2")
+              "0","1","2","3","4")
 
 def parse_font_file(fname):
     im = Image.open(fname).convert('1')
@@ -31,7 +31,7 @@ def main():
     print_header()
     print("{} ; <spc>".format(lst2asm([False]*8)))
     for c in CHARACTERS:
-        fname = path.join(fontdir, "8x8-font-{}.png".format(c))
+        fname = path.join(fontdir, "font-{}.png".format(c))
         font = reversed(parse_font_file(fname))
         print("{} ; {}".format(lst2asm(font), c))
 

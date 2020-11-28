@@ -33,7 +33,7 @@ init:   CLEAN_START		; Initializes Registers & Memory
 	jsr     fx_init
 	jsr	text_init
 
-main_loop:
+main_loop:	SUBROUTINE
 	VERTICAL_SYNC		; 4 scanlines Vertical Sync signal
 
 	; 34 VBlank lines (76 cycles/line)
@@ -44,6 +44,7 @@ main_loop:
 	jsr text_vblank
 	jsr wait_timint
 
+.kernel:
 	; 248 Kernel lines
 	lda #19			; (/ (* 248.0 76) 1024) = 18.40
 	sta T1024T

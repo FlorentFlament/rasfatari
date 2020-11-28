@@ -56,6 +56,7 @@ main_loop:	SUBROUTINE
 	lda #22			; (/ (* 26.0 76) 64) = 30.875
 	sta TIM64T
 	jsr fx_overscan
+	jsr text_overscan
         inc framecnt
 	jsr wait_timint
 

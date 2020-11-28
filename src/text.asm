@@ -74,6 +74,8 @@
 	ENDM
 
 text_init:	SUBROUTINE
+	lda #$00
+	sta fx_text_cnt
 	lda #$ff
 	sta fx_text_idx
 	rts
@@ -84,6 +86,16 @@ text_vblank:	SUBROUTINE
 	inc fx_text_idx
 .continue:
 	m_text_setup
+	rts
+
+text_overscan:	SUBROUTINE
+	inc fx_text_cnt
+	lda #(5*16)
+	cmp fx_text_cnt
+	bne .continue
+	lda #0
+	sta fx_text_cnt
+.continue:
 	rts
 
 ; FX Text Main Kernel part
@@ -166,9 +178,8 @@ TEXT_LOOP_START equ *
 
 ;;; Macro that skips lines to move the text up and down
 	MAC m_fx_text_skip_lines
-	lda framecnt
+	lda fx_text_cnt
 	lsr
-	and #$1f
 	tay
 	lda text_skip_table,Y
 	tay
@@ -239,9 +250,10 @@ text_color:
 	dc.b GREEN, GREEN
 
 text_skip_table:
-	;; ",".join(list(str(round((sin(x*2*pi/32) + 1) * 8/2)) for x in range(0,32)))
-	dc.b 4,5,6,6,7,7,8,8,8,8,8,7,7,6,6,5,4,3,2,2,1,1,0,0,0,0,0,1,1,2,2,3
-
+	;; BEAT = 80 (5 frames/note * 16 notes/beat)
+	;; l = [round((1-sin(x*pi/40)) * 8) for x in range(0,40)]
+	;; ','.join([str(x) for x in l[20:]+l[:20]])
+	dc.b 0,0,0,0,0,1,1,1,2,2,2,3,3,4,4,5,6,6,7,7,8,7,7,6,6,5,4,4,3,3,2,2,2,1,1,1,0,0,0,0
 text:
 	dc.b "   FLUSH    "
 	dc.b "  PRESENTS  "

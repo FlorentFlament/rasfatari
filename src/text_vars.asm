@@ -1,6 +1,7 @@
 ; Variables required for a single text display
 ; Pointer towards the text to be displayed
-fx_text_idx	ds 1		; Not used yet, but will be
+fx_text_idx	ds 1
+fx_text_cnt	ds 1		; Counter for the text movement
 
 ; 12 pointers used to display the text.
 ; txt_buf is long to initialize so this is done during vblank and must

@@ -167,7 +167,8 @@ TEXT_LOOP_START equ *
 ;;; Macro that skips lines to move the text up and down
 	MAC m_fx_text_skip_lines
 	lda framecnt
-	and #$3f
+	lsr
+	and #$1f
 	tay
 	lda text_skip_table,Y
 	tay
@@ -238,8 +239,8 @@ text_color:
 	dc.b GREEN, GREEN
 
 text_skip_table:
-	;; ",".join(list(str(round((sin(x*2*pi/64) + 1) * 16/2)) for x in range(0,64)))
-	dc.b 8,9,10,10,11,12,12,13,14,14,15,15,15,16,16,16,16,16,16,16,15,15,15,14,14,13,12,12,11,10,10,9,8,7,6,6,5,4,4,3,2,2,1,1,1,0,0,0,0,0,0,0,1,1,1,2,2,3,4,4,5,6,6,7
+	;; ",".join(list(str(round((sin(x*2*pi/32) + 1) * 8/2)) for x in range(0,32)))
+	dc.b 4,5,6,6,7,7,8,8,8,8,8,7,7,6,6,5,4,3,2,2,1,1,0,0,0,0,0,1,1,2,2,3
 
 text:
 	dc.b "   FLUSH    "

@@ -22,15 +22,16 @@
 	ENDM
 
 ; Setup text to be displayed
-; X must contain the text index to fetch
+; fx_text_idx contains the text index to fetch
 ; Uses tmp, ptr
 ; txt_buf will be filled with the appropriate pointers
 	MAC m_text_setup
+.setup:
 	; Multiply by 12 fx_text_idx
 	; *4 first
 	lda #0
 	sta tmp ; MSB
-	txa ; LSB
+	lda fx_text_idx
 	REPEAT 2
 	asl
 	rol tmp
@@ -60,12 +61,28 @@
 	lda ptr + 1
 	adc #>text
 	sta ptr + 1
-	; Then load the text from ptr
+	;; Check for end of text signified by #$00
+	ldy #0
+	lda (ptr),Y
+	bne .load_text
+	lda #0			; Loop text
+	sta fx_text_idx
+	jmp .setup
+.load_text:
+	;; Then load the text from ptr
 	m_fx_text_load
 	ENDM
 
 text_init:	SUBROUTINE
-	ldx #0
+	lda #$ff
+	sta fx_text_idx
+	rts
+
+text_vblank:	SUBROUTINE
+	lda framecnt
+	bne .continue
+	inc fx_text_idx
+.continue:
 	m_text_setup
 	rts
 
@@ -172,7 +189,6 @@ text_kernel SUBROUTINE
 	m_fx_text_kernel_main
 
 	; Synchronizing to have the same number of lines whatever the past
-	sta WSYNC
 	lda #$0
 	sta GRP0
 	sta GRP1
@@ -224,5 +240,10 @@ text_color:
 text_skip_table:
 	;; ",".join(list(str(round((sin(x*2*pi/64) + 1) * 16/2)) for x in range(0,64)))
 	dc.b 8,9,10,10,11,12,12,13,14,14,15,15,15,16,16,16,16,16,16,16,15,15,15,14,14,13,12,12,11,10,10,9,8,7,6,6,5,4,4,3,2,2,1,1,1,0,0,0,0,0,0,0,1,1,1,2,2,3,4,4,5,6,6,7
+
 text:
 	dc.b "   FLUSH    "
+	dc.b "  PRESENTS  "
+	dc.b "AN ATARI VCS"
+	dc.b "  _K INTRO  "
+	dc.b 0

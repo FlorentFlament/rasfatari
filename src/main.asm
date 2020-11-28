@@ -41,6 +41,7 @@ main_loop:
 	sta TIM64T
 	jsr fx_vblank
         INCLUDE "JahBah_player.asm"
+	jsr text_vblank
 	jsr wait_timint
 
 	; 248 Kernel lines

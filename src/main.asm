@@ -14,8 +14,8 @@
 
 framecnt        DS.B	1
 tmp             DS.B	1
-ptr		DS.B	2
         INCLUDE "JahBah-PG2_variables.asm"
+ptr = tt_ptr			; Reusing tt_ptr as temporary pointer
         INCLUDE "fx_vars.asm"
 	INCLUDE "text_vars.asm"
         echo "Used RAM:", (*)d, "bytes"

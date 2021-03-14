@@ -1,7 +1,17 @@
 TODO
 ====
 
-* Graphical dressing (top and bottom)
+Variants
+--------
+
+* Choose which instruments to display
+  * 7 instruments -> 7 bits -> 1 byte to decide
+* Choose position offset of display
+
+* Only 1 (chosen) chan centered
+* Rolling text
+* Lombric
+* Cut with full-screen anim.
 
 FXs
 ---

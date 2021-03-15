@@ -256,7 +256,6 @@ text_skip_table:
 	;; ','.join([str(x) for x in l[20:]+l[:20]])
 	dc.b 0,0,0,0,0,1,1,1,2,2,2,3,3,4,4,5,6,6,7,7,8,7,7,6,6,5,4,4,3,3,2,2,2,1,1,1,0,0,0,0
 text:
-	dc.b "            "
 	dc.b "   FLUSH    "
 	dc.b "  PRESENTS  "
 	dc.b "AN ATARI VCS"

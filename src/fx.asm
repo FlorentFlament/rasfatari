@@ -42,15 +42,6 @@
 	REPEND
     ENDM
 
-;;; Argument is the channel to consider
-;;; Y: index of note to test
-;;; At exit Z is set if this is a new note
-;;; Modifies A
-    MAC IS_NEW_NOTE
-	lda tt_envelope_index_c{1}
-	cmp tt_InsADIndexes-1,Y
-    ENDM
-
     MAC GET_VOLUME_COMMON
 	lda tt_envelope_index_c{1}
 	cmp tt_InsReleaseIndexes-1,y	; -1 because instruments start with #1
@@ -104,15 +95,47 @@
 	stx stack_idx
     ENDM
 
+;;; Filters the note depending on which are the intruments to display
+;;; Note fetched (and swapped) is in A
+;;; * Bits 7-3 for frequency
+;;; * Bits 2-0 for the instrument
+;;; Result of filter should be in A:
+;;; * Previous value if the note is to be displayed
+;;; * 0 if not
+;;; Uses X and Y
+    MAC FILTER_NOTE
+	tay			; save A in Y
+	and #$07		; Filters instrument
+	tax
+	lda ins_filter
+	dex
+	bmi .end_loop
+.loop:				; Positionning instrument bit in bit 0
+	lsr
+	dex
+	bpl .loop
+.end_loop:
+	and #$01		; if non-null displaying instrument
+	beq .end		; Otherwise and with 0 in A
+	tya
+.end:
+    ENDM
+
 ;;; Push note of provided channel into a circular notes stacks
 ;;; Channel must be provided as argument (0 or 1)
 ;;; Uses X, Y and A registers
     MAC PUSH_NEW_NOTE
 	GET_CURRENT_NOTE {1}
+	;; Current note is in A
+	;; If A < #TT_FIRST_PERC, there's no new note
 	cmp #TT_FIRST_PERC	 ; below that, there's only HOLD (or unused PAUSE)
 	bcc .no_new_note
 .new_note:
 	SWAP_NOTE
+	;; We need to filter here based on the instruments to display
+	;; Note stays in A if valid, otherwise 0 is put instead.
+	FILTER_NOTE
+	beq .silence
 	jmp .end
 
 .no_new_note:

@@ -317,6 +317,11 @@ fx_vblank:	SUBROUTINE
 	sta NUSIZ0
 	sta NUSIZ1
 
+	;; Setup instruments to display
+	ldx tt_cur_pat_index_c0
+	lda instruments_table,X
+	sta ins_filter
+
 	lda tt_timer
 	beq .new_notes
 	jmp .end
@@ -380,3 +385,10 @@ colors_table:
 	dc.b YELLOW		; SoftBeep - Low
 	dc.b DARK_GREY		; Bass
 	dc.b RED		; Chords
+
+instruments_table:
+	dc.b $00, $01, $02, $03, $04, $05, $06, $07
+	dc.b $08, $09, $0a, $0b, $0c, $0d, $0e, $0f
+	dc.b $10, $11, $12, $13, $14, $15, $16, $17
+	dc.b $18, $19, $1a, $1b, $1c, $1d, $1e, $1f
+	dc.b $20, $21, $22, $23

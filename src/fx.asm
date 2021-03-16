@@ -242,7 +242,7 @@
 	sta WSYNC
 	lda #0			; turn off note chan0
 	sta ENAM0
-	sleep 5
+	sleep 4
 	GET_NOTE_FREQUENCY 0
 	ROUGH_POSITION_LOOP 0
 	FINE_POSITION_NOTE 0
@@ -270,7 +270,7 @@
 	sta WSYNC
 	lda #0
 	sta ENAM1
-	sleep 19
+	sleep 20
 	GET_NOTE_FREQUENCY 1
 	ROUGH_POSITION_LOOP 1
 

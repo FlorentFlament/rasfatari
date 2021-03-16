@@ -294,6 +294,8 @@ text:
 	dc.b "            "
 	dc.b "   FLUSH    "
 	dc.b "  PRESENTS  "
+	dc.b " NOT A RAIN "
+	dc.b "            "
 	dc.b "AN ATARI VCS"
 	dc.b "  _K INTRO  "
 	dc.b " RELEASED AT"

@@ -73,7 +73,7 @@
 	lda cur_note_c{1}
 	lsr
 	lsr
-	and #$7c ; Extract note frequency
+	and #$7e ; Extract note frequency
     ENDM
 
 ;;; Argument is channel (0 or 1)

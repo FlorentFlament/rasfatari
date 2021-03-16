@@ -1,6 +1,6 @@
 ; Text to display is pointed to by ptr
 	MAC m_fx_text_load
-	ldy #11 ; Load the 11 characters to be displayed
+	ldy #11 ; Load the 12 characters to be displayed
 .next:
 	; Compute offset in the txt_buf buffer and move to X
 	tya
@@ -61,13 +61,6 @@
 	lda ptr + 1
 	adc #>text
 	sta ptr + 1
-	;; Check for end of text signified by #$00
-	ldy #0
-	lda (ptr),Y
-	bne .load_text
-	lda #0			; Loop text
-	sta fx_text_idx
-	jmp .setup
 .load_text:
 	;; Then load the text from ptr
 	m_fx_text_load
@@ -95,6 +88,14 @@ text_vblank:	SUBROUTINE
 	sta fx_text_cnt
 .continue:
 	jsr fx_text_setup
+	;; Check for end of text signified by #$00
+	ldy #0
+	lda (ptr),Y
+	bne .end
+	lda #0			; Loop text
+	sta fx_text_idx
+	jsr fx_text_setup
+.end
 	rts
 
 text_overscan:	SUBROUTINE
@@ -116,7 +117,7 @@ text_overscan:	SUBROUTINE
 	; This happens when writing HMOVE at the end of the scanline.
 	; L54: Display 2*8 lines
 	; This uses Y reg
-	lda #$ff
+	lda #LIGHT_GREY
 	sta COLUP0
 	sta COLUP1
 	ALIGN 128,$ea		; loop size is 83 bytes - align with nops
@@ -299,12 +300,14 @@ text:
 	dc.b "SHADOW PARTY"
 	dc.b "    ][]\    "
 	dc.b "            "
-	dc.b "HAD A CRAPPY"
-	dc.b "  YEAR ][][ "
+	dc.b "  ][][ WAS  "
+	dc.b "    CRAP    "
 	dc.b "BUT AT LEAST"
 	dc.b "WE COULD PUT"
 	dc.b " THESE BITS "
 	dc.b "  TOGETHER  "
+	dc.b " ON OUR GOOD"
+	dc.b " OLD MACHINE"
 	dc.b "            "
 	dc.b "   CREDITS  "
 	dc.b "MUSIC N FONT"
@@ -348,6 +351,5 @@ text:
 	dc.b "    XAYAX   "
 	dc.b "    X MEN   "
 	dc.b "   AND YOU  "
+	dc.b 0,"           "
 	dc.b "            "
-	dc.b "            "
-	dc.b 0

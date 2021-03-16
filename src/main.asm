@@ -12,6 +12,7 @@
 	SEG.U   ram
 	ORG     $0080
 
+framecnt	DS.B	1
 tmp             DS.B	1
         INCLUDE "JahBah-PG2_variables.asm"
 ptr = tt_ptr			; Reusing tt_ptr as temporary pointer
@@ -56,6 +57,7 @@ main_loop:	SUBROUTINE
 	sta TIM64T
 	jsr fx_overscan
 	jsr text_overscan
+	inc framecnt
 	jsr wait_timint
 
 	jmp main_loop		; scanline 308 - cycle 15

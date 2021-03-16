@@ -73,34 +73,36 @@
 	m_fx_text_load
 	ENDM
 
+fx_text_setup:	SUBROUTINE
+	m_text_setup
+	rts
+
 text_init:	SUBROUTINE
-	lda #0
+	lda #7
 	sta fx_text_cnt
 	lda #0
 	sta fx_text_idx
 	rts
 
 text_vblank:	SUBROUTINE
-	lda fx_text_cnt
-	cmp #40
+	lda framecnt
+	and #$03
 	bne .continue
+	dec fx_text_cnt
+	bpl .continue
 	inc fx_text_idx
+	lda #11
+	sta fx_text_cnt
 .continue:
-	m_text_setup
+	jsr fx_text_setup
 	rts
 
 text_overscan:	SUBROUTINE
-	inc fx_text_cnt
-	lda #(5*16)
-	cmp fx_text_cnt
-	bne .continue
-	lda #0
-	sta fx_text_cnt
-.continue:
 	rts
 
-; FX Text Main Kernel part
-; Note that this doesn't need to be aligned
+;;; FX Text Main Kernel part
+;;; Note that this doesn't need to be aligned
+;;; Y in [0; 7] to store the number of lines to display
 	MAC m_fx_text_kernel_main
 	;; Moving characters 8 pixels to the right
 	lda #$80
@@ -115,11 +117,7 @@ text_overscan:	SUBROUTINE
 	lda text_color		; 1st color line on index 0 cf doc below
 	sta COLUP0
 	sta COLUP1
-	ldy #7
-TEXT_LOOP_ALIGNED equ *
 	ALIGN 128,$ea		; loop size is 83 bytes - align with nops
-	echo "[Text loop] Align loss:", (* - TEXT_LOOP_ALIGNED)d, "bytes"
-TEXT_LOOP_START equ *
 	sta WSYNC
 .txt_ln:			; 76 machine cycles per line
 	sta HMOVE		; 3   3
@@ -190,21 +188,57 @@ TEXT_LOOP_START equ *
 	bpl .skip_lines
 	ENDM
 
+fx_text_print_line:	SUBROUTINE
+	m_fx_text_kernel_main
+	rts
+
 ; FX Text Kernel
 ; This will be used twice (2 different kernels)
 text_kernel SUBROUTINE
 	lda #$06 ; 3 copies small (Number & Size)
 	sta NUSIZ0
 	sta NUSIZ1
-
-	m_fx_text_skip_lines
 	jsr fx_text_position
-	m_fx_text_kernel_main
 
-	; Synchronizing to have the same number of lines whatever the past
+	ldy fx_text_cnt
+	lda framecnt
+	and #$02
+	bne .skip_loop
+	sta WSYNC
+	;; skip an additional line to account for the fact that each text line is on 2 lines
+
+.skip_loop:
+	cpy #8
+	bcc .display
+	sta WSYNC
+	sta WSYNC
+	dey
+	jmp .skip_loop
+
+.display:
+	jsr fx_text_print_line
 	lda #$0
 	sta GRP0
 	sta GRP1
+
+	inc fx_text_idx
+	jsr fx_text_setup
+	ldy #7
+	jsr fx_text_print_line
+	lda #$0
+	sta GRP0
+	sta GRP1
+
+	inc fx_text_idx
+	jsr fx_text_setup
+	ldy #7
+	jsr fx_text_print_line
+	lda #$0
+	sta GRP0
+	sta GRP1
+
+	dec fx_text_idx
+	dec fx_text_idx
 	rts
 
 ; Position the sprites
@@ -256,8 +290,12 @@ text_skip_table:
 	;; ','.join([str(x) for x in l[20:]+l[:20]])
 	dc.b 0,0,0,0,0,1,1,1,2,2,2,3,3,4,4,5,6,6,7,7,8,7,7,6,6,5,4,4,3,3,2,2,2,1,1,1,0,0,0,0
 text:
+	dc.b "            "
+	dc.b "            "
 	dc.b "   FLUSH    "
 	dc.b "  PRESENTS  "
 	dc.b "AN ATARI VCS"
 	dc.b "  _K INTRO  "
+	dc.b "            "
+	dc.b "            "
 	dc.b 0

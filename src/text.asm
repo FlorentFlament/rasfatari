@@ -86,7 +86,7 @@ text_init:	SUBROUTINE
 
 text_vblank:	SUBROUTINE
 	lda framecnt
-	and #$03
+	and #$07
 	bne .continue
 	dec fx_text_cnt
 	bpl .continue
@@ -102,7 +102,9 @@ text_overscan:	SUBROUTINE
 
 ;;; FX Text Main Kernel part
 ;;; Note that this doesn't need to be aligned
-;;; Y in [0; 7] to store the number of lines to display
+;;; Y in [0; 7] to store the number of lines to display (skipping top lines)
+;;; tmp in [0; 7] to store the number of lines to display as well (skipping bottom lines)
+;;; Uses X, Y and A
 	MAC m_fx_text_kernel_main
 	;; Moving characters 8 pixels to the right
 	lda #$80
@@ -114,7 +116,7 @@ text_overscan:	SUBROUTINE
 	; This happens when writing HMOVE at the end of the scanline.
 	; L54: Display 2*8 lines
 	; This uses Y reg
-	lda text_color		; 1st color line on index 0 cf doc below
+	lda #$ff
 	sta COLUP0
 	sta COLUP1
 	ALIGN 128,$ea		; loop size is 83 bytes - align with nops
@@ -163,16 +165,21 @@ text_overscan:	SUBROUTINE
 	lda (txt_buf+16),Y	; 5  51
 	sta GRP0		; 3  54
 	stx GRP1		; 3  57
+	;; Shorten the loop when tmp<0 - useful for scroller
+	dec tmp			; 5  62
+	bmi .end		; 2  64
+	cpy framecnt		; 3  67 ; Just spend 3 clock cycles
+	nop			; 2  69
+	nop			; 2  71
 	;; Updating color
-	lda text_color,Y	; 4  61
-	sta COLUP0		; 3  64
-	sta COLUP1		; 3  67
+	;;lda text_color,Y	; 4  61
+	;;sta COLUP0		; 3  64
+	;;sta COLUP1		; 3  67
 	;; looping logic
-	dey			; 2 69
-	nop			; 2 71
-	nop			; 2 73
+	dey			; 2 73
 	bpl .txt_ln		; 3(2+1) 76
 	echo "[Text loop] length:", (* - TEXT_LOOP_START)d, "bytes"
+.end:
 	ENDM
 
 ;;; Macro that skips lines to move the text up and down
@@ -202,7 +209,7 @@ text_kernel SUBROUTINE
 
 	ldy fx_text_cnt
 	lda framecnt
-	and #$02
+	and #$04
 	bne .skip_loop
 	sta WSYNC
 	;; skip an additional line to account for the fact that each text line is on 2 lines
@@ -216,6 +223,7 @@ text_kernel SUBROUTINE
 	jmp .skip_loop
 
 .display:
+	sty tmp
 	jsr fx_text_print_line
 	lda #$0
 	sta GRP0
@@ -224,6 +232,7 @@ text_kernel SUBROUTINE
 	inc fx_text_idx
 	jsr fx_text_setup
 	ldy #7
+	sty tmp
 	jsr fx_text_print_line
 	lda #$0
 	sta GRP0
@@ -231,12 +240,18 @@ text_kernel SUBROUTINE
 
 	inc fx_text_idx
 	jsr fx_text_setup
+	lda #6
+	sec
+	sbc fx_text_cnt
+	bmi .end
+	sta tmp
 	ldy #7
 	jsr fx_text_print_line
 	lda #$0
 	sta GRP0
 	sta GRP1
 
+.end:
 	dec fx_text_idx
 	dec fx_text_idx
 	rts
@@ -273,22 +288,6 @@ FX_TEXT_POS equ *
 	bpl .dont_hmp
 	rts
 
-	ALIGN 8
-;;; The flag is shifted to use the index of line n-1
-;;; And the first line has index 0 instead of 7
-;;; So here are the index of the colors for lines 0 to 7:
-;;; 0, 7, 6, 5, 4, 3, 2, 1
-text_color:
-	dc.b GREEN
-	dc.b RED, RED, RED
-	dc.b YELLOW, YELLOW
-	dc.b GREEN, GREEN
-
-text_skip_table:
-	;; BEAT = 80 (5 frames/note * 16 notes/beat)
-	;; l = [round((1-sin(x*pi/40)) * 8) for x in range(0,40)]
-	;; ','.join([str(x) for x in l[20:]+l[:20]])
-	dc.b 0,0,0,0,0,1,1,1,2,2,2,3,3,4,4,5,6,6,7,7,8,7,7,6,6,5,4,4,3,3,2,2,2,1,1,1,0,0,0,0
 text:
 	dc.b "            "
 	dc.b "            "
@@ -296,6 +295,29 @@ text:
 	dc.b "  PRESENTS  "
 	dc.b "AN ATARI VCS"
 	dc.b "  _K INTRO  "
+	dc.b " RELEASED AT"
+	dc.b "SHADOW PARTY"
+	dc.b "    ][]\    "
+	dc.b "            "
+	dc.b "HAD A CRAPPY"
+	dc.b "  YEAR ][][ "
+	dc.b "BUT AT LEAST"
+	dc.b "WE COULD PUT"
+	dc.b " THESE BITS "
+	dc.b "  TOGETHER  "
+	dc.b "            "
+	dc.b "   CREDITS  "
+	dc.b "MUSIC N FONT"
+	dc.b "   GLAFOUK  "
+	dc.b "    CODE    "
+	dc.b "   FLEWWW   "
+	dc.b "            "
+	dc.b "  GREETINGS "
+	dc.b " TO ALL THE "
+	dc.b "PEOP WE LOVE"
+	dc.b "  INCLUDING "
+	dc.b "   BUT NOT  "
+	dc.b " LIMITED TO "
 	dc.b "            "
 	dc.b "            "
 	dc.b 0

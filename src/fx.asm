@@ -386,10 +386,17 @@ colors_table:
 	dc.b DARK_GREY		; Bass
 	dc.b RED		; Chords
 
+;;instruments_table:
+;;	dc.b $01, $01, $01, $01, $1e, $1e, $1e, $1e
+;;	dc.b $21, $21, $21, $21, $5e, $5e, $5e, $5e
+;;	dc.b $1f, $1f, $1f, $1f, $1e, $1e, $1e, $1e
+;;	dc.b $61, $61, $61, $61, $1e, $1e, $1e, $1e
+;;	dc.b $ff, $ff, $ff, $ff, $1e, $1e, $1e, $1e
+;;	dc.b $01, $01, $01, $ff
 instruments_table:
-	dc.b $01, $01, $01, $01, $1e, $1e, $1e, $1e
-	dc.b $21, $21, $21, $21, $5e, $5e, $5e, $5e
-	dc.b $1f, $1f, $1f, $1f, $1e, $1e, $1e, $1e
-	dc.b $61, $61, $61, $61, $1e, $1e, $1e, $1e
-	dc.b $ff, $ff, $ff, $ff, $1e, $1e, $1e, $1e
-	dc.b $01, $01, $01, $ff
+	dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+	dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+	dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+	dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+	dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+	dc.b $ff, $ff, $ff, $ff

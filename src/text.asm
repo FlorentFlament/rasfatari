@@ -333,6 +333,7 @@ text:
 	dc.b "MYSTIC BYTES"
 	dc.b "    NOICE   "
 	dc.b " POPSY TEAM "
+	dc.b "    RBBS    "
 	dc.b " RESISTANCE "
 	dc.b " SECTOR ONE "
 	dc.b "    SWYNG   "

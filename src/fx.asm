@@ -336,8 +336,8 @@ fx_kernel:	SUBROUTINE
 	sta WSYNC
 	RASTA_BAND
 
-	sec
 	lda #4
+	sec
 	sbc tt_timer
 	tay
 .pre_loop:

@@ -9,5 +9,6 @@ YELLOW = $2a
 RED = $66
     ENDIF
 
+WORM_COL = $66
 LIGHT_GREY = $0e
 DARK_GREY = $06

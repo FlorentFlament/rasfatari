@@ -120,7 +120,9 @@ text_overscan:	SUBROUTINE
 	lda #LIGHT_GREY
 	sta COLUP0
 	sta COLUP1
+	jmp .constant
 	ALIGN 128,$ea		; loop size is 83 bytes - align with nops
+.constant:
 	sta WSYNC
 .txt_ln:			; 76 machine cycles per line
 	sta HMOVE		; 3   3
@@ -197,24 +199,26 @@ text_overscan:	SUBROUTINE
 	ENDM
 
 fx_text_print_line:	SUBROUTINE
+	sta WSYNC
 	m_fx_text_kernel_main
 	rts
 
 ; FX Text Kernel
 ; This will be used twice (2 different kernels)
-text_kernel SUBROUTINE
+text_kernel:	SUBROUTINE
 	lda #$06 ; 3 copies small (Number & Size)
 	sta NUSIZ0
 	sta NUSIZ1
 	jsr fx_text_position
 
-	ldy fx_text_cnt
 	lda framecnt
 	and #$04
-	bne .skip_loop
+	bne .no_additional_wsync
 	sta WSYNC
 	;; skip an additional line to account for the fact that each text line is on 2 lines
 
+.no_additional_wsync:
+	ldy fx_text_cnt
 .skip_loop:
 	cpy #8
 	bcc .display
@@ -246,7 +250,7 @@ text_kernel SUBROUTINE
 	inc fx_text_idx
 	jsr fx_text_setup
 
-	lda #3
+	lda #2
 	sec
 	sbc fx_text_cnt
 	bmi .end

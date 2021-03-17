@@ -48,6 +48,7 @@ main_loop:	SUBROUTINE
 	; 248 Kernel lines
 	lda #19			; (/ (* 248.0 76) 1024) = 18.40
 	sta T1024T
+	jsr lombric_kernel
 	jsr fx_kernel		; scanline 33 - cycle 23
 	jsr text_kernel
 	jsr wait_timint		; scanline 289 - cycle 30
@@ -71,6 +72,7 @@ wait_timint:
 	rts
 
         INCLUDE "JahBah-PG2_trackdata.asm"
+	INCLUDE "lombric.asm"
 	INCLUDE "fx.asm"
 	INCLUDE "text.asm"
         echo "Used ROM:", (* - $F000)d, "bytes"

@@ -232,8 +232,12 @@ text_kernel SUBROUTINE
 
 	inc fx_text_idx
 	jsr fx_text_setup
+
+	lda #14
+	sec
+	sbc fx_text_cnt
+	sta tmp
 	ldy #7
-	sty tmp
 	jsr fx_text_print_line
 	lda #$0
 	sta GRP0
@@ -241,7 +245,8 @@ text_kernel SUBROUTINE
 
 	inc fx_text_idx
 	jsr fx_text_setup
-	lda #6
+
+	lda #3
 	sec
 	sbc fx_text_cnt
 	bmi .end

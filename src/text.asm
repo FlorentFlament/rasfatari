@@ -345,6 +345,7 @@ text:
 	dc.b "GOBLINISH   "
 	dc.b "         JAC"
 	dc.b " LABORATOIRE"
+	dc.b " PROUT      "
 	dc.b "MYSTIC BYTES"
 	dc.b "       NOICE"
 	dc.b "POPSY TEAM  "

@@ -95,32 +95,6 @@
 	stx stack_idx
     ENDM
 
-;;; Filters the note depending on which are the intruments to display
-;;; Note fetched (and swapped) is in A
-;;; * Bits 7-3 for frequency
-;;; * Bits 2-0 for the instrument
-;;; Result of filter should be in A:
-;;; * Previous value if the note is to be displayed
-;;; * 0 if not
-;;; Uses X and Y
-    MAC FILTER_NOTE
-	tay			; save A in Y
-	and #$07		; Filters instrument
-	tax
-	lda ins_filter
-	dex
-	bmi .end_loop
-.loop:				; Positionning instrument bit in bit 0
-	lsr
-	dex
-	bpl .loop
-.end_loop:
-	and #$01		; if non-null displaying instrument
-	beq .end		; Otherwise and with 0 in A
-	tya
-.end:
-    ENDM
-
 ;;; Push note of provided channel into a circular notes stacks
 ;;; Channel must be provided as argument (0 or 1)
 ;;; Uses X, Y and A registers
@@ -132,10 +106,6 @@
 	bcc .no_new_note
 .new_note:
 	SWAP_NOTE
-	;; We need to filter here based on the instruments to display
-	;; Note stays in A if valid, otherwise 0 is put instead.
-	FILTER_NOTE
-	beq .silence
 	jmp .end
 
 .no_new_note:
@@ -317,11 +287,6 @@ fx_vblank:	SUBROUTINE
 	sta NUSIZ0
 	sta NUSIZ1
 
-	;; Setup instruments to display
-	ldx tt_cur_pat_index_c0
-	lda instruments_table,X
-	sta ins_filter
-
 	lda tt_timer
 	beq .new_notes
 	jmp .end
@@ -385,18 +350,3 @@ colors_table:
 	dc.b YELLOW		; SoftBeep - Low
 	dc.b DARK_GREY		; Bass
 	dc.b RED		; Chords
-
-;;instruments_table:
-;;	dc.b $01, $01, $01, $01, $1e, $1e, $1e, $1e
-;;	dc.b $21, $21, $21, $21, $5e, $5e, $5e, $5e
-;;	dc.b $1f, $1f, $1f, $1f, $1e, $1e, $1e, $1e
-;;	dc.b $61, $61, $61, $61, $1e, $1e, $1e, $1e
-;;	dc.b $ff, $ff, $ff, $ff, $1e, $1e, $1e, $1e
-;;	dc.b $01, $01, $01, $ff
-instruments_table:
-	dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-	dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-	dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-	dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-	dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-	dc.b $ff, $ff, $ff, $ff

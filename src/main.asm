@@ -14,7 +14,7 @@
 
 framecnt	DS.B	1
 tmp             DS.B	1
-        INCLUDE "JahBah-PG2_variables.asm"
+        INCLUDE "JahBah-intro_variables.asm"
 ptr = tt_ptr			; Reusing tt_ptr as temporary pointer
 	INCLUDE "worm_vars.asm"
         INCLUDE "fx_vars.asm"
@@ -30,7 +30,7 @@ ptr = tt_ptr			; Reusing tt_ptr as temporary pointer
 	INCLUDE "text_font.asm"
 
 init:   CLEAN_START		; Initializes Registers & Memory
-        INCLUDE "JahBah-PG2_init.asm"
+        INCLUDE "JahBah-intro_init.asm"
 	jsr     fx_init
 	jsr	text_init
 
@@ -73,7 +73,7 @@ wait_timint:
 	beq wait_timint
 	rts
 
-        INCLUDE "JahBah-PG2_trackdata.asm"
+        INCLUDE "JahBah-intro_trackdata.asm"
 	INCLUDE "worm.asm"
 	INCLUDE "fx.asm"
 	INCLUDE "text.asm"

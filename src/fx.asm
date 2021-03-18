@@ -344,9 +344,9 @@ fx_overscan:	SUBROUTINE
 
 colors_table:
 	dc.b LIGHT_GREY		; Drum
+	dc.b RED		; Chords
 	dc.b GREEN		; LeadBeep - High
 	dc.b GREEN		; LeadBeep - Low
 	dc.b YELLOW		; SoftBeep - High
 	dc.b YELLOW		; SoftBeep - Low
 	dc.b DARK_GREY		; Bass
-	dc.b RED		; Chords

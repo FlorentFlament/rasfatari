@@ -4,12 +4,12 @@
     MAC ROUGH_POSITION_WORM
 	sec
 	; Beware ! this loop must not cross a page !
-	echo "[FX position note Loop] M", ({1})d, "start :", *
+	echo "[FX position worm Loop] P", ({1})d, "start :", *
 .rough_loop:
 	; The rough_loop consumes 15 (5*3) pixels
 	sbc #$0f	      ; 2 cycles
 	bcs .rough_loop ; 3 cycles
-	echo "[FX position note Loop] M", ({1})d, "end :", *
+	echo "[FX position worm Loop] P", ({1})d, "end :", *
 	sta RESP{1}
     ENDM
 
@@ -43,6 +43,9 @@ worm_vblank:	SUBROUTINE
 	lda worm_pos
 	clc
 	adc #8
+	;; 2 nops for alignment ..
+	nop
+	nop
 	sta WSYNC
 	SLEEP 14
 	ROUGH_POSITION_WORM 1

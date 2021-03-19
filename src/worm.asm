@@ -30,10 +30,13 @@
     ENDM
 
 worm_init:
-	lda #0
+	lda #$ff
 	sta worm_pos
+	lda #$02
+	sta worm_state
+	rts
 
-worm_vblank:	SUBROUTINE
+    MAC POSITION_WORM
 	lda worm_pos
 	sta WSYNC
 	SLEEP 14
@@ -43,9 +46,6 @@ worm_vblank:	SUBROUTINE
 	lda worm_pos
 	clc
 	adc #8
-	;; 2 nops for alignment ..
-	nop
-	nop
 	sta WSYNC
 	SLEEP 14
 	ROUGH_POSITION_WORM 1
@@ -53,13 +53,42 @@ worm_vblank:	SUBROUTINE
 
 	sta WSYNC
 	sta HMOVE		; Commit notes fine tuning
+    ENDM
 
+worm_vblank:	SUBROUTINE
 	lda framecnt
-	and #$01
-	bne .end
-	dec worm_pos
+	bne .finalize
+	;; State is in worm_state 3 upper bits
+	lda worm_state
+	clc
+	adc #$20
+	sta worm_state
 
-.end:
+	;; Will we launch the worm ?
+	and #$60
+	bne .finalize
+.lauching_worm:
+	inc worm_state
+	lda worm_state
+	and #$03
+	cmp #3
+	bcc .color_ok
+	lda worm_state
+	and #$fc
+	sta worm_state
+.color_ok:
+	lda worm_state
+	and #$80
+	bne .right_left_init
+.left_right_init:
+	lda #$00
+	beq .direction_chosen	; inconditional
+.right_left_init:
+	lda #(160-16)
+.direction_chosen:
+	sta worm_pos
+
+.finalize:
 	lda framecnt
 	lsr
 	lsr
@@ -69,13 +98,42 @@ worm_vblank:	SUBROUTINE
 	sta worm_ptr
 	lda worm_sprite0_ptrh,Y
 	sta worm_ptr+1
+
+	lda worm_pos
+	cmp #(160-15)
+	bcs .end
+
+	POSITION_WORM
+	lda framecnt
+	and #$01
+	beq .end
+	lda worm_state
+	and #$80
+	bne .right_left_move
+.left_right_move:
+	inc worm_pos
+	jmp .end
+.right_left_move:
+	dec worm_pos
+
+.end:
+	lda worm_state
+	and #$80
+	bne .no_reflection	; Reflection unset by text_fx anyway ..
+	lda #$08
+	sta REFP0
+	sta REFP1
+.no_reflection:
 	rts
 
 worm_kernel:	SUBROUTINE
 	lda worm_pos
-	cmp #(160-16)
+	cmp #(160-15)
 	bcs .transparent_worm
-	lda #WORM_COL
+	lda worm_state
+	and #$03
+	tax
+	lda worm_colors,X
 	bne .color_chosen	; inconditional
 .transparent_worm:
 	lda #0
@@ -95,10 +153,21 @@ worm_kernel:	SUBROUTINE
 	sta WSYNC
 	ldy #7
 .loop:
+	lda worm_state
+	and #$80
+	beq .left_right_display
+.right_left_display:
 	lda (ptr),Y
 	sta GRP0
 	lda (worm_ptr),Y
 	sta GRP1
+	jmp .end_display
+.left_right_display:
+	lda (ptr),Y
+	sta GRP1
+	lda (worm_ptr),Y
+	sta GRP0
+.end_display:
 	sta WSYNC
 	sta WSYNC
 	dey
@@ -108,6 +177,9 @@ worm_kernel:	SUBROUTINE
 	sta GRP0
 	sta GRP1
 	rts
+
+worm_colors:
+	dc.b RED, YELLOW, GREEN
 
 worm_sprite0_ptrl:
 	dc.b <worm_sprite0_a, <worm_sprite0_b, <worm_sprite0_c, <worm_sprite0_d

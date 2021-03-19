@@ -31,8 +31,9 @@ ptr = tt_ptr			; Reusing tt_ptr as temporary pointer
 
 init:   CLEAN_START		; Initializes Registers & Memory
         INCLUDE "JahBah-intro2_init.asm"
-	jsr     fx_init
-	jsr	text_init
+	jsr worm_init
+	jsr fx_init
+	jsr text_init
 
 main_loop:	SUBROUTINE
 	VERTICAL_SYNC		; 4 scanlines Vertical Sync signal
@@ -42,8 +43,8 @@ main_loop:	SUBROUTINE
 	sta TIM64T
 	jsr fx_vblank
         INCLUDE "JahBah_player.asm"
-	jsr text_vblank
 	jsr worm_vblank
+	jsr text_vblank
 	jsr wait_timint
 
 .kernel:

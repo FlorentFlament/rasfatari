@@ -206,7 +206,12 @@ fx_text_print_line:	SUBROUTINE
 ; FX Text Kernel
 ; This will be used twice (2 different kernels)
 text_kernel:	SUBROUTINE
-	lda #$06 ; 3 copies small (Number & Size)
+	;; No reflection
+	lda #$00
+	sta REFP0
+	sta REFP1
+	;; 3 copies small (Number & Size)
+	lda #$06
 	sta NUSIZ0
 	sta NUSIZ1
 	jsr fx_text_position

@@ -269,6 +269,10 @@ text_kernel:	SUBROUTINE
 .end:
 	dec fx_text_idx
 	dec fx_text_idx
+
+	lda #$00
+	sta GRP0
+	sta GRP1
 	rts
 
 ; Position the sprites

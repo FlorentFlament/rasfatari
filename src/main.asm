@@ -31,7 +31,7 @@ ptr = tt_ptr			; Reusing tt_ptr as temporary pointer
 
 init:   CLEAN_START		; Initializes Registers & Memory
         INCLUDE "JahBah-intro2_init.asm"
-	jsr worm_init
+	;; jsr worm_init
 	jsr fx_init
 	jsr text_init
 
@@ -43,7 +43,7 @@ main_loop:	SUBROUTINE
 	sta TIM64T
 	jsr fx_vblank
         INCLUDE "JahBah_player.asm"
-	jsr worm_vblank
+	;; jsr worm_vblank
 	jsr text_vblank
 	jsr wait_timint
 
@@ -51,7 +51,8 @@ main_loop:	SUBROUTINE
 	; 248 Kernel lines
 	lda #19			; (/ (* 248.0 76) 1024) = 18.40
 	sta T1024T
-	jsr worm_kernel
+	jsr banner_kernel
+	;; jsr worm_kernel
 	jsr fx_kernel		; scanline 33 - cycle 23
 	jsr text_kernel
 	jsr wait_timint		; scanline 289 - cycle 30
@@ -75,7 +76,8 @@ wait_timint:
 	rts
 
         INCLUDE "JahBah-intro2_trackdata.asm"
-	INCLUDE "worm.asm"
+	INCLUDE "banner.asm"
+	;; INCLUDE "worm.asm"
 	INCLUDE "fx.asm"
 	INCLUDE "text.asm"
         echo "Used ROM:", (* - $F000)d, "bytes"

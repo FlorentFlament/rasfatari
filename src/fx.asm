@@ -298,6 +298,15 @@ fx_vblank:	SUBROUTINE
 	rts
 
 fx_kernel:	SUBROUTINE
+	;; 1 copy & quad size player and missile (Number & Size)
+	lda #$30
+	sta NUSIZ0
+	sta NUSIZ1
+	;; Disable vertical delays
+	lda #$00
+	sta VDELP0
+	sta VDELP1
+
 	sta WSYNC
 	RASTA_BAND
 

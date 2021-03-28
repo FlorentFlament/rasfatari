@@ -27,7 +27,9 @@ ptr = tt_ptr			; Reusing tt_ptr as temporary pointer
 	SEG code
 	ORG $F000
 	;; Loading aligned data
+TEXT_FONT_START equ *
 	INCLUDE "text_font.asm"
+	echo "Font size:", (* - TEXT_FONT_START)d, "bytes"
 
 init:   CLEAN_START		; Initializes Registers & Memory
         INCLUDE "JahBah-intro2_init.asm"

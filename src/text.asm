@@ -315,7 +315,7 @@ text:
 	dc.b "  RASFATARI "
 	dc.b "            "
 	dc.b "AN ATARI VCS"
-	dc.b "_K INTRO    "
+	dc.b "ZK INTRO    "
 	dc.b "RELEASED AT "
 	dc.b "SHADOW PARTY"
 	dc.b "        ][]\"

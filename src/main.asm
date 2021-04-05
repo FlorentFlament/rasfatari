@@ -62,6 +62,9 @@ init:   CLEAN_START		; Initializes Registers & Memory
 	jsr fx_init
 	jsr text_init
 
+	lda #3
+	sta patcnt
+
 main_loop:	SUBROUTINE
 	VERTICAL_SYNC		; 4 scanlines Vertical Sync signal
 

@@ -32,8 +32,6 @@
 worm_init:
 	lda #$ff
 	sta worm_pos
-	lda #$02
-	sta worm_state
 	rts
 
     MAC POSITION_WORM
@@ -59,6 +57,9 @@ worm_vblank:	SUBROUTINE
 	lda framecnt
 	bne .finalize
 	;; We can use patcnt as our state
+	;; bits 1-0 trigger the worm when value is 2
+	;; bit 2 determines the direction
+	;; bits 3-2 determines the color
 	lda patcnt
 	and #$03
 	cmp #2			; Here's when we launch the worm

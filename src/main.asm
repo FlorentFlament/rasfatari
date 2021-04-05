@@ -15,6 +15,7 @@
 	echo ""
 	echo "-RAM-"
 framecnt	DS.B	1
+patcnt		DS.B	1
 tmp             DS.B	1
         INCLUDE "JahBah-intro2_variables.asm"
 ptr = tt_ptr			; Reusing tt_ptr as temporary pointer
@@ -57,7 +58,7 @@ TEXT_DATA_START equ *
 MAIN_CODE_START equ *
 init:   CLEAN_START		; Initializes Registers & Memory
         INCLUDE "JahBah-intro2_init.asm"
-	;; jsr worm_init
+	jsr worm_init
 	jsr fx_init
 	jsr text_init
 
@@ -67,18 +68,35 @@ main_loop:	SUBROUTINE
 	; 34 VBlank lines (76 cycles/line)
 	lda #39			; (/ (* 34.0 76) 64) = 40.375
 	sta TIM64T
+
 	jsr fx_vblank
         INCLUDE "JahBah_player.asm"
-	;; jsr worm_vblank
 	jsr text_vblank
+
+	lda patcnt
+	and #$03
+	bne .worm_vblank
+	jsr banner_vblank
+	jmp .vblank_done
+.worm_vblank:
+	jsr worm_vblank
+.vblank_done:
 	jsr wait_timint
 
 .kernel:
 	; 248 Kernel lines
 	lda #19			; (/ (* 248.0 76) 1024) = 18.40
 	sta T1024T
+
+	lda patcnt
+	and #$03
+	bne .worm_kernel
 	jsr banner_kernel
-	;; jsr worm_kernel
+	jmp .kernel_header_done
+.worm_kernel:
+	jsr worm_kernel
+
+.kernel_header_done:
 	jsr fx_kernel		; scanline 33 - cycle 23
 	jsr text_kernel
 	jsr wait_timint		; scanline 289 - cycle 30
@@ -88,7 +106,16 @@ main_loop:	SUBROUTINE
 	sta TIM64T
 	jsr fx_overscan
 	jsr text_overscan
+
+	;; may be optimized a bit
 	inc framecnt
+	lda framecnt
+	cmp #160		; 160 = 32 notes/pattern * 5 frames/note
+	bne .continue
+	inc patcnt
+	lda #0
+	sta framecnt
+.continue:
 	jsr wait_timint
 
 	jmp main_loop		; scanline 308 - cycle 15

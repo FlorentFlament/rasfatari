@@ -302,10 +302,6 @@ fx_kernel:	SUBROUTINE
 	lda #$30
 	sta NUSIZ0
 	sta NUSIZ1
-	;; Disable vertical delays
-	lda #$00
-	sta VDELP0
-	sta VDELP1
 
 	sta WSYNC
 	RASTA_BAND

@@ -1,5 +1,5 @@
 worm_colors:
-	dc.b RED, YELLOW, GREEN
+	dc.b RED, YELLOW, GREEN, LIGHT_GREY
 
 worm_sprite0_ptrl:
 	dc.b <worm_sprite0_a, <worm_sprite0_b, <worm_sprite0_c, <worm_sprite0_d

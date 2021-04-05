@@ -58,27 +58,14 @@ worm_init:
 worm_vblank:	SUBROUTINE
 	lda framecnt
 	bne .finalize
-	;; State is in worm_state 3 upper bits
-	lda worm_state
-	clc
-	adc #$20
-	sta worm_state
-
-	;; Will we launch the worm ?
-	and #$60
-	bne .finalize
-.lauching_worm:
-	inc worm_state
-	lda worm_state
+	;; We can use patcnt as our state
+	lda patcnt
 	and #$03
-	cmp #3
-	bcc .color_ok
-	lda worm_state
-	and #$fc
-	sta worm_state
-.color_ok:
-	lda worm_state
-	and #$80
+	cmp #2			; Here's when we launch the worm
+	bne .finalize
+.launching_worm:
+	lda patcnt
+	and #$04
 	bne .right_left_init
 .left_right_init:
 	lda #$00
@@ -107,8 +94,8 @@ worm_vblank:	SUBROUTINE
 	lda framecnt
 	and #$01
 	beq .end
-	lda worm_state
-	and #$80
+	lda patcnt
+	and #$04
 	bne .right_left_move
 .left_right_move:
 	inc worm_pos
@@ -117,8 +104,8 @@ worm_vblank:	SUBROUTINE
 	dec worm_pos
 
 .end:
-	lda worm_state
-	and #$80
+	lda patcnt
+	and #$04
 	bne .no_reflection	; Reflection unset by text_fx anyway ..
 	lda #$08
 	sta REFP0
@@ -127,10 +114,13 @@ worm_vblank:	SUBROUTINE
 	rts
 
 worm_kernel:	SUBROUTINE
+	sta WSYNC		; sync
 	lda worm_pos
 	cmp #(160-15)
 	bcs .transparent_worm
-	lda worm_state
+	lda patcnt
+	lsr
+	lsr
 	and #$03
 	tax
 	lda worm_colors,X
@@ -153,8 +143,8 @@ worm_kernel:	SUBROUTINE
 	sta WSYNC
 	ldy #7
 .loop:
-	lda worm_state
-	and #$80
+	lda patcnt
+	and #$04
 	beq .left_right_display
 .right_left_display:
 	lda (ptr),Y

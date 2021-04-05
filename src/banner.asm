@@ -32,6 +32,35 @@ FX_BANNER_POS equ *
 	bpl .dont_hmp
 	rts
 
+banner_vblank:	SUBROUTINE
+	;; Set banner color
+	lda framecnt
+	cmp #7
+	bcs .greater_than_7
+	asl
+	ora #$f0
+	jmp .continue
+.greater_than_7:
+	cmp #153
+	bcs .greater_than_153
+	lda #$ff
+	jmp .continue
+.greater_than_153:
+	lda #160
+	sec
+	sbc framecnt
+	asl
+	ora #$f0
+.continue:
+	;; color should be grey
+	;; lda LIGHT_GREY
+	sta COLUP0
+	sta COLUP1
+
+	;; and position the banner
+	jsr fx_banner_position
+	rts
+
 banner_kernel:	SUBROUTINE
 	;; Shouldn't be reflection
 	;; lda #$00
@@ -46,12 +75,6 @@ banner_kernel:	SUBROUTINE
 	lda #$01
 	sta VDELP0
 	sta VDELP1
-	;; color should be grey
-	;; lda LIGHT_GREY
-	;; sta COLUP0
-	;; sta COLUP1
-
-	jsr fx_banner_position
 
 	lda #13		; 14 lines
 	sta ptr		; Using ptr as temp variable
@@ -78,8 +101,17 @@ banner_kernel:	SUBROUTINE
 	bpl .kernel_loop
 
 	lda #$00
+	;; Disable vertical delays
+	sta VDELP0
+	sta VDELP1
+	;; Clear graphics
 	sta GRP0
 	sta GRP1
+	;; Clear positionning
 	sta HMP0
 	sta HMP1
+
+	sta WSYNC		; sync with worm header
+	sta WSYNC		; sync with worm header
+	sta WSYNC		; sync with worm header
 	rts

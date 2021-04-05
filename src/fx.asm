@@ -171,12 +171,12 @@
     MAC ROUGH_POSITION_LOOP
 	sec
 	; Beware ! this loop must not cross a page !
-	echo "[FX position note Loop] M", ({1})d, "start :", *
+	;; echo "[FX position note Loop] M", ({1})d, "start :", *
 .rough_loop:
 	; The rough_loop consumes 15 (5*3) pixels
 	sbc #$0f	      ; 2 cycles
 	bcs .rough_loop ; 3 cycles
-	echo "[FX position note Loop] M", ({1})d, "end :", *
+	;; echo "[FX position note Loop] M", ({1})d, "end :", *
 	sta RESM{1}
     ENDM
 

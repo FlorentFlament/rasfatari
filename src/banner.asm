@@ -5,16 +5,17 @@
 ; Must be aligned !
 FX_BANNER_POS_ALIGN equ *
 	ALIGN 8
-	echo "[FX banner pos] Align loss:", (* - FX_BANNER_POS_ALIGN)d, "bytes"
+	;; echo "[FX banner pos] Align loss:", (* - FX_BANNER_POS_ALIGN)d, "bytes"
 fx_banner_position:	SUBROUTINE
 	;; GRP0 wanted position is 56 = (160-(6*8)) / 2
 	;; GRP1 wanted position is 64 = grp0 + 8
 FX_BANNER_POS equ *
 	sta WSYNC
 	ldx #7			; 7 -> 54 pixels
-.posit	dex		; 2
+.posit:
+	dex		; 2
 	bne .posit	; 2** (3 if branching)
-	echo "[FX banner pos] Loop:", (* - FX_BANNER_POS)d, "bytes"
+	;; echo "[FX banner pos] Loop:", (* - FX_BANNER_POS)d, "bytes"
 	sta RESP0		; 54 pixels
 	sta RESP1		; 63 pixels
 	lda #$e0		; -> 56 pixels
@@ -26,7 +27,8 @@ FX_BANNER_POS equ *
 
 	; Don't touch HMPx for 24 cycles
 	ldx #4
-.dont_hmp	dex
+.dont_hmp:
+	dex
 	bpl .dont_hmp
 	rts
 
@@ -81,22 +83,3 @@ banner_kernel:	SUBROUTINE
 	sta HMP0
 	sta HMP1
 	rts
-
-banner_0:
-	dc.b $3f, $30, $00, $c3, $cc, $cc, $c3, $c0
-	dc.b $c3, $c0, $30, $00, $30, $3f
-banner_1:
-	dc.b $ff, $00, $00, $0c, $c3, $c3, $cf, $cc
-	dc.b $03, $00, $00, $00, $00, $ff
-banner_2:
-	dc.b $ff, $00, $00, $30, $33, $33, $30, $30
-	dc.b $3c, $30, $0c, $00, $00, $ff
-banner_3:
-	dc.b $ff, $00, $00, $c3, $33, $33, $f3, $33
-	dc.b $c3, $03, $0f, $00, $00, $ff
-banner_4:
-	dc.b $ff, $00, $00, $0c, $33, $33, $0f, $03
-	dc.b $0c, $00, $c0, $00, $00, $ff
-banner_5:
-	dc.b $fc, $0c, $00, $33, $33, $33, $33, $30
-	dc.b $33, $30, $0c, $00, $0c, $fc

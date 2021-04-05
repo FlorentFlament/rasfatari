@@ -12,6 +12,8 @@
 	SEG.U   ram
 	ORG     $0080
 
+	echo ""
+	echo "-RAM-"
 framecnt	DS.B	1
 tmp             DS.B	1
         INCLUDE "JahBah-intro2_variables.asm"
@@ -26,11 +28,33 @@ ptr = tt_ptr			; Reusing tt_ptr as temporary pointer
 
 	SEG code
 	ORG $F000
-	;; Loading aligned data
+
+	;; Loading aligned (and non-aligned) data
+	echo ""
+	echo "-DATA-"
+
 TEXT_FONT_START equ *
 	INCLUDE "text_font.asm"
-	echo "Font size:", (* - TEXT_FONT_START)d, "bytes"
+	echo "Font   size:", (* - TEXT_FONT_START)d, "bytes"
 
+        INCLUDE "JahBah-intro2_trackdata.asm"
+
+BANNER_DATA_START equ *
+	INCLUDE "banner_data.asm"
+	echo "Banner size:", (* - BANNER_DATA_START)d, "bytes"
+
+WORM_DATA_START equ *
+	INCLUDE "worm_data.asm"
+	echo "Worm   size:", (* - WORM_DATA_START)d, "bytes"
+
+TEXT_DATA_START equ *
+	INCLUDE "text_data.asm"
+	echo "Text   size:", (* - TEXT_DATA_START)d, "bytes"
+
+	echo ""
+	echo "-CODE-"
+
+MAIN_CODE_START equ *
 init:   CLEAN_START		; Initializes Registers & Memory
         INCLUDE "JahBah-intro2_init.asm"
 	;; jsr worm_init
@@ -76,12 +100,26 @@ wait_timint:
 	lda TIMINT
 	beq wait_timint
 	rts
+	echo "Main   size:", (* - MAIN_CODE_START)d, "bytes - Music player size"
 
-        INCLUDE "JahBah-intro2_trackdata.asm"
+BANNER_START equ *
 	INCLUDE "banner.asm"
-	;; INCLUDE "worm.asm"
+	echo "Banner size:", (* - BANNER_START)d, "bytes"
+
+WORM_START equ *
+	INCLUDE "worm.asm"
+	echo "Worm   size:", (* - WORM_START)d, "bytes"
+
+FX_START equ *
 	INCLUDE "fx.asm"
+	echo "FX     size:", (* - FX_START)d, "bytes"
+
+TEXT_START equ *
 	INCLUDE "text.asm"
+	echo "Text   size:", (* - TEXT_START)d, "bytes"
+
+	echo ""
+	echo "-TOTAL-"
         echo "Used ROM:", (* - $F000)d, "bytes"
 
 ;;;-----------------------------------------------------------------------------

@@ -95,7 +95,7 @@ text_vblank:	SUBROUTINE
 	lda #0			; Loop text
 	sta fx_text_idx
 	jsr fx_text_setup
-.end
+.end:
 	rts
 
 text_overscan:	SUBROUTINE
@@ -121,7 +121,11 @@ text_overscan:	SUBROUTINE
 	sta COLUP0
 	sta COLUP1
 	jmp .constant
+TEXT_LOOP_ALIGN_START equ *
 	ALIGN 128,$ea		; loop size is 83 bytes - align with nops
+	echo "[FIX ME] Text loop align loss:", (* - TEXT_LOOP_ALIGN_START)d, "bytes"
+
+TEXT_LOOP_START equ *
 .constant:
 	sta WSYNC
 .txt_ln:			; 76 machine cycles per line
@@ -181,7 +185,7 @@ text_overscan:	SUBROUTINE
 	;; looping logic
 	dey			; 2 73
 	bpl .txt_ln		; 3(2+1) 76
-	echo "[Text loop] length:", (* - TEXT_LOOP_START)d, "bytes"
+	;; echo "Text loop size:", (* - TEXT_LOOP_START)d, "bytes"
 .end:
 	ENDM
 
@@ -282,14 +286,14 @@ text_kernel:	SUBROUTINE
 ; Must be aligned !
 FX_TEXT_POS_ALIGN equ *
 	ALIGN 8
-	echo "[FX text pos] Align loss:", (* - FX_TEXT_POS_ALIGN)d, "bytes"
+	;; echo "[FX text pos] Align loss:", (* - FX_TEXT_POS_ALIGN)d, "bytes"
 fx_text_position SUBROUTINE
 FX_TEXT_POS equ *
 	sta WSYNC
 	ldx #6  		; 2 - Approx 128 pixels / 15
 .posit	dex		; 2
 	bne .posit	; 2** (3 if branching)
-	echo "[FX text pos] Loop:", (* - FX_TEXT_POS)d, "bytes"
+	;; echo "[FX text pos] Loop:", (* - FX_TEXT_POS)d, "bytes"
 	sta RESP0		; 3 34 (2 + 5*(2+3) + 4 + 3)
 	; 102 pixels - 68 = 34 ; -> 39 observerd on Stella
 	nop
@@ -306,73 +310,3 @@ FX_TEXT_POS equ *
 .dont_hmp	dex
 	bpl .dont_hmp
 	rts
-
-text:
-	dc.b "            "
-	dc.b "            "
-	dc.b "   FLUSH    "
-	dc.b "  PRESENTS  "
-	dc.b "  RASFATARI "
-	dc.b "            "
-	dc.b "AN ATARI VCS"
-	dc.b "ZK INTRO    "
-	dc.b "RELEASED AT "
-	dc.b "SHADOW PARTY"
-	dc.b "        ][]\"
-	dc.b "            "
-	dc.b "][][QS CRAP "
-	dc.b "BUT AT LEAST"
-	dc.b "WE COULD PUT"
-	dc.b "THOSE BITS  "
-	dc.b "TOGETHER    "
-	dc.b "ON OUR GOOD "
-	dc.b "OLD MACHINE "
-	dc.b "            "
-	dc.b "  CREDITS   "
-	dc.b "MSX NQ GFX  "
-	dc.b "GLAFOUK     "
-	dc.b "      CODE  "
-	dc.b "      FLEWWW"
-	dc.b "            "
-	dc.b "GREETINGS   "
-	dc.b "TO ALL THE  "
-	dc.b "PEOP WE LOVE"
-	dc.b "INCLUDING   "
-	dc.b "BUT NOT     "
-	dc.b "LIMITED TO  "
-	dc.b "      ALTAIR"
-	dc.b "CLUSTER     "
-	dc.b "       COINE"
-	dc.b "COOKIE CREW "
-	dc.b "   DELICIOUS"
-	dc.b "   AMIGANS  "
-	dc.b "DENTIFRICE  "
-	dc.b "         DMA"
-	dc.b "DUNE        "
-	dc.b "     GENESIS"
-	dc.b "     PROJECT"
-	dc.b "GOBLINISH   "
-	dc.b "         JAC"
-	dc.b " LABORATOIRE"
-	dc.b " PROUT      "
-	dc.b "MYSTIC BYTES"
-	dc.b "       NOICE"
-	dc.b "POPSY TEAM  "
-	dc.b "        RBBS"
-	dc.b "RESISTANCE  "
-	dc.b "  SECTOR ONE"
-	dc.b "SWYNG       "
-	dc.b "     TENFOUR"
-	dc.b "TMP         "
-	dc.b "    TRILOBIT"
-	dc.b "UNDEAD      "
-	dc.b "SCENERS     "
-	dc.b "    UP ROUGH"
-	dc.b "  ULTRASYD  "
-	dc.b "VITAL MOTION"
-	dc.b "       WAMMA"
-	dc.b "XAYAX       "
-	dc.b "       X MEN"
-	dc.b "   AND YOU  "
-	dc.b 0,"           "
-	dc.b "            "

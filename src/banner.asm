@@ -34,19 +34,26 @@ FX_BANNER_POS equ *
 
 banner_vblank:	SUBROUTINE
 	;; Set banner color
+	lda patcnt
+	and #$01
+	bne .greater_than_14
 	lda framecnt
 	cmp #14
 	bcs .greater_than_14
 	jmp .continue
 .greater_than_14:
+	lda patcnt
+	and #$01
+	beq .less_than_306
+	lda framecnt
 	cmp #146
-	bcs .greater_than_146
-	lda #$0e
-	jmp .continue
-.greater_than_146:
+	bcc .less_than_306
 	lda #160
 	sec
 	sbc framecnt
+	jmp .continue
+.less_than_306:
+	lda #$0e
 .continue:
 	;; color should be grey
 	;; lda LIGHT_GREY

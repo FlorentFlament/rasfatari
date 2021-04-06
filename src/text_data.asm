@@ -32,6 +32,7 @@ text:
 	dc.b "BUT NOT     "
 	dc.b "LIMITED TO  "
 	dc.b "      ALTAIR"
+	dc.b "   BOCK     "
 	dc.b "CLUSTER     "
 	dc.b "       COINE"
 	dc.b "COOKIE CREW "

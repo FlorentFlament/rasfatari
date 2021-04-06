@@ -38,6 +38,10 @@ TEXT_FONT_START equ *
 	INCLUDE "text_font.asm"
 	echo "Font   size:", (* - TEXT_FONT_START)d, "bytes"
 
+TEXT_START equ *
+	INCLUDE "text.asm"
+	echo "Text   size:", (* - TEXT_START)d, "bytes"
+
         INCLUDE "JahBah-intro2_trackdata.asm"
 
 BANNER_DATA_START equ *
@@ -77,7 +81,7 @@ main_loop:	SUBROUTINE
 	jsr text_vblank
 
 	lda patcnt
-	and #$03
+	and #$02
 	bne .worm_vblank
 	jsr banner_vblank
 	jmp .vblank_done
@@ -92,7 +96,7 @@ main_loop:	SUBROUTINE
 	sta T1024T
 
 	lda patcnt
-	and #$03
+	and #$02
 	bne .worm_kernel
 	jsr banner_kernel
 	jmp .kernel_header_done
@@ -143,10 +147,6 @@ WORM_START equ *
 FX_START equ *
 	INCLUDE "fx.asm"
 	echo "FX     size:", (* - FX_START)d, "bytes"
-
-TEXT_START equ *
-	INCLUDE "text.asm"
-	echo "Text   size:", (* - TEXT_START)d, "bytes"
 
 	echo ""
 	echo "-TOTAL-"

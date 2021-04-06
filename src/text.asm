@@ -66,41 +66,6 @@
 	m_fx_text_load
 	ENDM
 
-fx_text_setup:	SUBROUTINE
-	m_text_setup
-	rts
-
-text_init:	SUBROUTINE
-	lda #7
-	sta fx_text_cnt
-	lda #0
-	sta fx_text_idx
-	rts
-
-text_vblank:	SUBROUTINE
-	lda framecnt
-	and #$07
-	bne .continue
-	dec fx_text_cnt
-	bpl .continue
-	inc fx_text_idx
-	lda #11
-	sta fx_text_cnt
-.continue:
-	jsr fx_text_setup
-	;; Check for end of text signified by #$00
-	ldy #0
-	lda (ptr),Y
-	bne .end
-	lda #0			; Loop text
-	sta fx_text_idx
-	jsr fx_text_setup
-.end:
-	rts
-
-text_overscan:	SUBROUTINE
-	rts
-
 ;;; FX Text Main Kernel part
 ;;; Note that this doesn't need to be aligned
 ;;; Y in [0; 7] to store the number of lines to display (skipping top lines)
@@ -120,10 +85,6 @@ text_overscan:	SUBROUTINE
 	lda #LIGHT_GREY
 	sta COLUP0
 	sta COLUP1
-	jmp .constant
-TEXT_LOOP_ALIGN_START equ *
-	ALIGN 128,$ea		; loop size is 83 bytes - align with nops
-	echo "[FIX ME] Text loop align loss:", (* - TEXT_LOOP_ALIGN_START)d, "bytes"
 
 TEXT_LOOP_START equ *
 .constant:
@@ -189,6 +150,49 @@ TEXT_LOOP_START equ *
 .end:
 	ENDM
 
+PRINT_LINE_ALIGN_START equ *
+	ALIGN 128,$ea		; loop size is 83 bytes - align with nops
+	echo "[LOSS] Print line align loss:", (* - PRINT_LINE_ALIGN_START)d, "bytes"
+fx_text_print_line:	SUBROUTINE
+	sta WSYNC
+	m_fx_text_kernel_main
+	rts
+
+fx_text_setup:	SUBROUTINE
+	m_text_setup
+	rts
+
+text_init:	SUBROUTINE
+	lda #7
+	sta fx_text_cnt
+	lda #0
+	sta fx_text_idx
+	rts
+
+text_vblank:	SUBROUTINE
+	lda framecnt
+	and #$07
+	bne .continue
+	dec fx_text_cnt
+	bpl .continue
+	inc fx_text_idx
+	lda #11
+	sta fx_text_cnt
+.continue:
+	jsr fx_text_setup
+	;; Check for end of text signified by #$00
+	ldy #0
+	lda (ptr),Y
+	bne .end
+	lda #0			; Loop text
+	sta fx_text_idx
+	jsr fx_text_setup
+.end:
+	rts
+
+text_overscan:	SUBROUTINE
+	rts
+
 ;;; Macro that skips lines to move the text up and down
 	MAC m_fx_text_skip_lines
 	lda fx_text_cnt
@@ -201,11 +205,6 @@ TEXT_LOOP_START equ *
 	dey
 	bpl .skip_lines
 	ENDM
-
-fx_text_print_line:	SUBROUTINE
-	sta WSYNC
-	m_fx_text_kernel_main
-	rts
 
 ; FX Text Kernel
 ; This will be used twice (2 different kernels)

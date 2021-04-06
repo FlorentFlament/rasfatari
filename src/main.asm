@@ -40,7 +40,7 @@ TEXT_FONT_START equ *
 
 TEXT_START equ *
 	INCLUDE "text.asm"
-	echo "Text   size:", (* - TEXT_START)d, "bytes"
+	echo "[CODE] Text code size:", (* - TEXT_START)d, "bytes"
 
         INCLUDE "JahBah-intro2_trackdata.asm"
 
@@ -54,7 +54,7 @@ WORM_DATA_START equ *
 
 TEXT_DATA_START equ *
 	INCLUDE "text_data.asm"
-	echo "Text   size:", (* - TEXT_DATA_START)d, "bytes"
+	echo "Text data size:", (* - TEXT_DATA_START)d, "bytes"
 
 	echo ""
 	echo "-CODE-"

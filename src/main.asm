@@ -150,7 +150,8 @@ FX_START equ *
 
 	echo ""
 	echo "-TOTAL-"
-        echo "Used ROM:", (* - $F000)d, "bytes"
+	echo "Used ROM:", (* - $F000)d, "bytes"
+	echo "Remaining ROM:", ($FFFC - *)d, "bytes"
 
 ;;;-----------------------------------------------------------------------------
 ;;; Reset Vector

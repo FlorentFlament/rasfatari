@@ -17,7 +17,7 @@
 framecnt	DS.B	1
 patcnt		DS.B	1
 tmp             DS.B	1
-        INCLUDE "JahBah-intro2_variables.asm"
+        INCLUDE "JahBah-introAndLight2_variables.asm"
 ptr = tt_ptr			; Reusing tt_ptr as temporary pointer
 	INCLUDE "worm_vars.asm"
         INCLUDE "fx_vars.asm"
@@ -42,7 +42,7 @@ TEXT_START equ *
 	INCLUDE "text.asm"
 	echo "[CODE] Text code size:", (* - TEXT_START)d, "bytes"
 
-        INCLUDE "JahBah-intro2_trackdata.asm"
+        INCLUDE "JahBah-introAndLight2_trackdata.asm"
 
 BANNER_DATA_START equ *
 	INCLUDE "banner_data.asm"
@@ -61,7 +61,7 @@ TEXT_DATA_START equ *
 
 MAIN_CODE_START equ *
 init:   CLEAN_START		; Initializes Registers & Memory
-        INCLUDE "JahBah-intro2_init.asm"
+        INCLUDE "JahBah-introAndLight2_init.asm"
 	jsr worm_init
 	jsr fx_init
 	jsr text_init

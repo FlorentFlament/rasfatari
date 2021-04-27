@@ -7,15 +7,17 @@ from imglib import *
 
 def parse_font_file(fname):
     im = Image.open(fname).convert('1')
-
-    # Getting a 16x8 list
     raw = list(im.getdata())
+
+    if len(raw) != 48*16:
+        print("Format of image \"{}\" doesn't match.".format(fname))
+        print("Expecting {}=48x16 pixels, but got {}".format(48*16, len(raw)))
+        exit(1)
+
     chunks = [raw[x:x+8] for x in range(0, len(raw), 8)]
     bhunks = [lbool2int((e!=0 for e in l)) for l in chunks]
-    return bhunks[6:-6]
-
-def print_header0():
-    print("sprite1:")
+    # return bhunks[6:-6] # Removing empty first and last lines
+    return bhunks
 
 def main():
     fname = argv[1]

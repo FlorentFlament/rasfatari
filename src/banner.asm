@@ -34,6 +34,7 @@ FX_BANNER_POS equ *
 
 banner_vblank:	SUBROUTINE
 	;; Set banner color
+	;; Banner smooth appearance and disappearance
 	lda patcnt
 	and #$01
 	bne .greater_than_14
@@ -79,7 +80,7 @@ banner_kernel:	SUBROUTINE
 	sta VDELP0
 	sta VDELP1
 
-	lda #13		; 14 lines
+	lda #15		; 14 lines
 	sta ptr		; Using ptr as temp variable
 .kernel_loop:
 	ldx ptr
@@ -114,7 +115,5 @@ banner_kernel:	SUBROUTINE
 	sta HMP0
 	sta HMP1
 
-	sta WSYNC		; sync with worm header
-	sta WSYNC		; sync with worm header
 	sta WSYNC		; sync with worm header
 	rts

@@ -56,5 +56,7 @@ smoke2:
 
 smoke_tbl_l:
 	dc.b <smoke0, <smoke1, <smoke0, <smoke1, <smoke2, <smoke0, <smoke1, <smoke0
+	dc.b <smoke1, <smoke2, <smoke0, <smoke1, <smoke0, <smoke1, <smoke2, <smoke0
 smoke_tbl_h:
 	dc.b >smoke0, >smoke1, >smoke0, >smoke1, >smoke2, >smoke0, >smoke1, >smoke0
+	dc.b >smoke1, >smoke2, >smoke0, >smoke1, >smoke0, >smoke1, >smoke2, >smoke0

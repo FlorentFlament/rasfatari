@@ -68,7 +68,7 @@ banner_vblank:	SUBROUTINE
 	;; Prepare banner pointers
 	lda patcnt
 	and #$04
-	bne .title
+	beq .title
 .worm:
 	lda framecnt
 	REPEAT 4

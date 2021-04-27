@@ -64,7 +64,7 @@ init:   CLEAN_START		; Initializes Registers & Memory
 	jsr fx_init
 	jsr text_init
 
-	lda #3
+	lda #-2
 	sta patcnt
 
 main_loop:	SUBROUTINE

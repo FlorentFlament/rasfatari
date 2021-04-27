@@ -72,7 +72,7 @@ worm_vblank:	SUBROUTINE
 	lda #$00
 	beq .direction_chosen	; inconditional
 .right_left_init:
-	lda #(160-16)
+	lda #(160-15)
 .direction_chosen:
 	sta worm_pos
 
@@ -88,7 +88,7 @@ worm_vblank:	SUBROUTINE
 	sta worm_ptr+1
 
 	lda worm_pos
-	cmp #(160-15)
+	cmp #(160-12)
 	bcs .end
 
 	POSITION_WORM
@@ -117,7 +117,7 @@ worm_vblank:	SUBROUTINE
 worm_kernel:	SUBROUTINE
 	sta WSYNC		; sync
 	lda worm_pos
-	cmp #(160-15)
+	cmp #(160-12)
 	bcs .transparent_worm
 	lda patcnt
 	lsr

@@ -19,9 +19,7 @@ patcnt		DS.B	1
 tmp             DS.B	1
         INCLUDE "JahBah-introAndLight2_variables.asm"
 ptr = tt_ptr			; Reusing tt_ptr as temporary pointer
-	INCLUDE "worm_vars.asm"
-        INCLUDE "fx_vars.asm"
-	INCLUDE "text_vars.asm"
+	INCLUDE "variables.asm"
         echo "Used RAM:", (*)d, "bytes"
 
 ;;;-----------------------------------------------------------------------------

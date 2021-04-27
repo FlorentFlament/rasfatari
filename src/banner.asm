@@ -32,7 +32,63 @@ FX_BANNER_POS equ *
 	bpl .dont_hmp
 	rts
 
+;;; Select banner
+	MAC select_banner
+	;; {1} is the base banner address (i.e: banner_0)
+	lda #<{1}
+	sta ptr
+	lda #>{1}
+	sta ptr+1
+	ENDM
+
+;;; Banner pointers setup
+	MAC prepare_banner_pointers
+	;; banner's base pointer needs to be passed in ptr
+	;; ptr will be overwritten
+	ldx #0
+.loop:
+	lda ptr
+	sta header_buf,X
+	lda ptr+1
+	sta header_buf+1,X
+	lda #16
+	clc
+	adc ptr
+	sta ptr
+	lda #0
+	adc ptr+1
+	sta ptr+1
+	inx
+	inx
+	cpx #12
+	bne .loop
+	ENDM
+
 banner_vblank:	SUBROUTINE
+	;; Prepare banner pointers
+	lda patcnt
+	and #$04
+	bne .title
+.worm:
+	lda framecnt
+	REPEAT 4
+	lsr
+	REPEND
+	and #$07
+	tax
+	lda smoke_tbl_l,X
+	sta ptr
+	lda smoke_tbl_h,X
+	sta ptr+1
+	jmp .choice_done
+.title:
+	lda #<banner
+	sta ptr
+	lda #>banner
+	sta ptr+1
+.choice_done:
+	prepare_banner_pointers
+
 	;; Set banner color
 	;; Banner smooth appearance and disappearance
 	lda patcnt
@@ -80,27 +136,28 @@ banner_kernel:	SUBROUTINE
 	sta VDELP0
 	sta VDELP1
 
-	lda #15		; 14 lines
+	lda #15		; 16 lines
 	sta ptr		; Using ptr as temp variable
 .kernel_loop:
-	ldx ptr
+	ldy ptr
+	lda (header_buf),Y
+	sta GRP0
 	sta WSYNC
-	lda banner_0,X
-	sta GRP0
-	lda banner_1,X
+	lda (header_buf+2),Y
 	sta GRP1
-	lda banner_2,X
+	lda (header_buf+4),Y
 	sta GRP0
-	ldy banner_3,X
-	lda banner_5,X
-	sta tmp	; Using as temp variable
-	lda banner_4,X
+	lda (header_buf+6),Y
 	tax
+	lda (header_buf+10),Y
+	sta tmp	; Using as temp variable
+	lda (header_buf+8),Y
+	tay
 	lda tmp
-	sty GRP1		; banner_3
-	stx GRP0		; banner_4
+	stx GRP1		; banner_3
+	sty GRP0		; banner_4
 	sta GRP1		; banner_5
-	stx GRP0
+	sty GRP0
 	dec ptr
 	bpl .kernel_loop
 

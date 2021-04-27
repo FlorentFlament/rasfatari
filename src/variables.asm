@@ -30,7 +30,12 @@ fx_text_cnt	ds 1		; Counter for the text movement
 txt_buf	ds 12*2
 
 
+;;;;; HEADER BUFFER ;;;;;
+;;; Mostly used for smoking worm animation ;;;
+
+header_buf ds 6*2		; 6 sprite pointers
+
 ;;;;; WORM VARS ;;;;;
 
+worm_ptr = header_buf		; Reusing header bug for worm temp ptr
 worm_pos	DS.B	1
-worm_ptr	DS.B	2

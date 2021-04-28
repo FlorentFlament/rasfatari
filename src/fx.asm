@@ -106,7 +106,7 @@
 	bcc .no_new_note
 .new_note:
 	SWAP_NOTE
-	jmp .end
+	bne .end ; unconditional - can't have null note since it's >#TT_FIRST_PERC
 
 .no_new_note:
 	;; Silence or Sustain ?
@@ -124,7 +124,7 @@
 	bne .sustain
 .silence:
 	lda #$00
-	jmp .end
+	beq .end		; unconditional
 
 .sustain:
 	;; We need to swap previous note with current #$40
@@ -206,7 +206,7 @@
 	bne .new_c0_note
 	sta WSYNC
 	sta WSYNC
-	jmp .skip_c0_note
+	beq .skip_c0_note ; unconditional
 
 .new_c0_note:
 	sta WSYNC
@@ -234,7 +234,7 @@
 	sta WSYNC
 	sta WSYNC
 	sta WSYNC
-	jmp .skip_c1_note
+	beq .skip_c1_note ; unconditional - beq following a bne
 
 .new_c1_note:
 	sta WSYNC
@@ -289,7 +289,7 @@ fx_vblank:	SUBROUTINE
 
 	lda tt_timer
 	beq .new_notes
-	jmp .end
+	jmp .end ; can't be simplified cause .end is far
 .new_notes:
 	PUSH_NEW_NOTE 0
 	PUSH_NEW_NOTE 1
@@ -325,7 +325,7 @@ fx_kernel:	SUBROUTINE
 	DISPLAY_BAND
 	dec tmp
 	bmi .end
-	jmp .loop
+	jmp .loop ; can't be simplified cause .loop is far
 
 .end:
 

@@ -233,7 +233,7 @@ text_kernel:	SUBROUTINE
 	sta WSYNC
 	sta WSYNC
 	dey
-	jmp .skip_loop
+	bpl .skip_loop		; Unconditional - Can't be >0x0b here
 
 .display:
 	sty tmp

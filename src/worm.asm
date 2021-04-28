@@ -105,7 +105,7 @@ worm_vblank:	SUBROUTINE
 	bne .right_left_move
 .left_right_move:
 	inc worm_pos
-	jmp .end
+	bne .end		; inconditional (worm_pos can't be 0 here)
 .right_left_move:
 	dec worm_pos
 
@@ -130,7 +130,7 @@ worm_kernel:	SUBROUTINE
 	and #$03
 	tax
 	lda worm_colors,X
-	bne .color_chosen	; inconditional
+	bne .color_chosen	; unconditional
 .transparent_worm:
 	lda #0
 
@@ -157,7 +157,7 @@ worm_kernel:	SUBROUTINE
 	sta GRP0
 	lda (worm_ptr),Y
 	sta GRP1
-	jmp .end_display
+	jmp .end_display	; can't find unconditional branch
 .left_right_display:
 	lda (ptr),Y
 	sta GRP1

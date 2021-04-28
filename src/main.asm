@@ -128,7 +128,7 @@ main_loop:	SUBROUTINE
 .continue:
 	jsr wait_timint
 
-	jmp main_loop		; scanline 308 - cycle 15
+	jmp main_loop		; main_loop is far - scanline 308 - cycle 15
 
 
 ; X register must contain the number of scanlines to skip

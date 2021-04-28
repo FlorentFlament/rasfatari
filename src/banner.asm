@@ -80,7 +80,7 @@ banner_vblank:	SUBROUTINE
 	sta ptr
 	lda smoke_tbl_h,X
 	sta ptr+1
-	jmp .choice_done
+	bne .choice_done	; unconditional - smoking worm data high byte is not at address 0
 .title:
 	lda #<banner
 	sta ptr
@@ -96,8 +96,7 @@ banner_vblank:	SUBROUTINE
 	bne .greater_than_14
 	lda framecnt
 	cmp #14
-	bcs .greater_than_14
-	jmp .continue
+	bcc .continue
 .greater_than_14:
 	lda patcnt
 	and #$01
@@ -108,7 +107,7 @@ banner_vblank:	SUBROUTINE
 	lda #160
 	sec
 	sbc framecnt
-	jmp .continue
+	bne .continue		; unconditional - framecnt is <160
 .less_than_306:
 	lda #$0e
 .continue:

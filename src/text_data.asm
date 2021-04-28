@@ -13,6 +13,7 @@ text:
 	dc.b "        ][]\"
 	dc.b "            "
 	dc.b "RASFATARISM_"
+	dc.b "            "
 	dc.b "RACE DA BEAM"
 	dc.b "SMOKE DA TIA"
 	dc.b "DRINK DA ROM"

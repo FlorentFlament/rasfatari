@@ -79,12 +79,17 @@ main_loop:	SUBROUTINE
 	jsr text_vblank
 
 	lda patcnt
+	cmp #254		; i.e -2
+	bcs .invisible_worm
 	and #$02
 	bne .worm_vblank
 	jsr banner_vblank
 	jmp .vblank_done
 .worm_vblank:
 	jsr worm_vblank
+	jmp .vblank_done
+.invisible_worm:
+	jsr worm_vblank_invisible
 .vblank_done:
 	jsr wait_timint
 

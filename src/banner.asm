@@ -74,7 +74,7 @@ banner_vblank:	SUBROUTINE
 	REPEAT 4
 	lsr
 	REPEND
-	and #$0f
+	and #$07		; 8 images
 	tax
 	lda smoke_tbl_l,X
 	sta ptr

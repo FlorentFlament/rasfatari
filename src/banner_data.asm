@@ -55,8 +55,6 @@ smoke2:
 	dc.b $0c, $30, $c0, $c0, $30, $0c, $03, $03
 
 smoke_tbl_l:
-	dc.b <smoke0, <smoke1, <smoke0, <smoke1, <smoke2, <smoke0, <smoke1, <smoke0
-	dc.b <smoke1, <smoke2, <smoke0, <smoke1, <smoke0, <smoke1, <smoke2, <smoke0
+	dc.b <smoke0, <smoke1, <smoke2, <smoke1, <smoke0, <smoke2, <smoke1, <smoke2
 smoke_tbl_h:
-	dc.b >smoke0, >smoke1, >smoke0, >smoke1, >smoke2, >smoke0, >smoke1, >smoke0
-	dc.b >smoke1, >smoke2, >smoke0, >smoke1, >smoke0, >smoke1, >smoke2, >smoke0
+	dc.b >smoke0, >smoke1, >smoke2, >smoke1, >smoke0, >smoke2, >smoke1, >smoke2

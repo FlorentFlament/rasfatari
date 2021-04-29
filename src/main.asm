@@ -16,6 +16,7 @@
 	echo "-RAM-"
 framecnt	DS.B	1
 patcnt		DS.B	1
+fuzz		DS.B	1	; one-time flag used to trigger scroll-text - can be sacrified if required
 tmp             DS.B	1
         INCLUDE "JahBah-introAndLight2_variables.asm"
 ptr = tt_ptr			; Reusing tt_ptr as temporary pointer
@@ -64,6 +65,8 @@ init:   CLEAN_START		; Initializes Registers & Memory
 	jsr fx_init
 	jsr text_init
 
+	lda #$00
+	sta fuzz
 	lda #-2
 	sta patcnt
 
@@ -74,22 +77,25 @@ main_loop:	SUBROUTINE
 	lda #39			; (/ (* 34.0 76) 64) = 40.375
 	sta TIM64T
 
+	;; VBLANK stuff
 	jsr fx_vblank
         INCLUDE "JahBah_player.asm"
+	ldx fuzz
+	bne .unblock_text
+	jsr text_init
+.unblock_text:
 	jsr text_vblank
-
 	lda patcnt
-	cmp #254		; i.e -2
-	bcs .invisible_worm
+	bne .skip_fuzz
+	ldx #1
+	stx fuzz
+.skip_fuzz:
 	and #$02
 	bne .worm_vblank
 	jsr banner_vblank
 	jmp .vblank_done
 .worm_vblank:
 	jsr worm_vblank
-	jmp .vblank_done
-.invisible_worm:
-	jsr worm_vblank_invisible
 .vblank_done:
 	jsr wait_timint
 

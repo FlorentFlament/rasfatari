@@ -53,11 +53,6 @@ worm_init:
 	sta HMOVE		; Commit notes fine tuning
     ENDM
 
-worm_vblank_invisible:	SUBROUTINE
-	lda #$ff
-	sta worm_pos
-	rts
-
 worm_vblank:	SUBROUTINE
 	lda framecnt
 	bne .finalize

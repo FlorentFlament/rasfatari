@@ -20,7 +20,7 @@ text:
 	dc.b "SMOKE DA TIA"
 	dc.b "DRINK DA ROM"
 	dc.b "FUCK DA BYTE"
-	dc.b "SHARE CODE  "
+	dc.b " SHARE CODE "
 	dc.b "NQ STAY IRIE"
 	dc.b "            "
 	dc.b "JAY BLESSING"

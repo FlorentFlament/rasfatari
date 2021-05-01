@@ -51,10 +51,6 @@ WORM_DATA_START equ *
 	INCLUDE "worm_data.asm"
 	echo "Worm   size:", (* - WORM_DATA_START)d, "bytes"
 
-TEXT_DATA_START equ *
-	INCLUDE "text_data.asm"
-	echo "Text data size:", (* - TEXT_DATA_START)d, "bytes"
-
 	echo ""
 	echo "-CODE-"
 
@@ -156,6 +152,10 @@ WORM_START equ *
 FX_START equ *
 	INCLUDE "fx.asm"
 	echo "FX     size:", (* - FX_START)d, "bytes"
+
+TEXT_DATA_START equ *
+	INCLUDE "text_data.asm"
+	echo "Text data size:", (* - TEXT_DATA_START)d, "bytes"
 
 	echo ""
 	echo "-TOTAL-"

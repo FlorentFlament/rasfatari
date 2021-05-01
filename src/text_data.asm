@@ -1,8 +1,8 @@
 text:
 	dc.b "            "
 	dc.b "            "
-	dc.b "   FLUSH    "
-	dc.b " OFFER YOU  "
+	dc.b "   QFLUSH   "
+	dc.b " OFFERS YOU "
 	dc.b "            "
 	dc.b " QRASFATARI "
 	dc.b "            "
@@ -21,6 +21,7 @@ text:
 	dc.b "SMOKE DA TIA"
 	dc.b "DRINK DA ROM"
 	dc.b "FUCK DA BYTE"
+	dc.b "SHARE DQCODE"
 	dc.b "            "
 	dc.b "JAY BLESSING"
 	dc.b "NQ BIG UP TO"
